@@ -6,9 +6,13 @@ from qutip import *
 
 
 class QTCircuit:
-    def __init__(self, n_qubits: int, n_clbits: int):
+    def __init__(self, n_qubits: int, n_clbits: int, init_state: Qobj | None = None):
         self.n: int = n_qubits
-        self.state: Qobj = tensor([basis(2, 0)] * n_qubits)
+        if init_state is None:
+            self.state: Qobj = tensor([basis(2, 0)] * n_qubits)
+        else:
+            assert init_state.shape == (2**n_qubits, 1), f"Initial state must be a {n_qubits}-qubit state vector"
+            self.state: Qobj = init_state
         self.state = ket2dm(self.state)
         self.cregs: list = [0] * n_clbits
         self.timeline: list = []  # stores (str, list[int], any)
@@ -53,6 +57,7 @@ class QTCircuit:
     def c_Z(self, q: int, condition: Callable | int) -> None:
         flag = self._process_condition(condition)
         if flag:
+            print(f"c_Z({q}, {condition}) = {flag}")
             ops: list = [qeye(2)] * self.n
             ops[q] = sigmaz()
             Z_op: Qobj = tensor(ops)
@@ -62,6 +67,7 @@ class QTCircuit:
     def c_X(self, q: int, condition: Callable | int) -> None:
         flag = self._process_condition(condition)
         if flag:
+            print(f"c_X({q}, {condition}) = {flag}")
             ops: list = [qeye(2)] * self.n
             ops[q] = sigmax()
             X_op: Qobj = tensor(ops)
@@ -90,11 +96,16 @@ class QTCircuit:
             kind, qubits, meta = op
             symbols: list = ['-----'] * self.n
 
-            if kind in ('MXX', 'MZZ'):
-                q1, q2 = qubits
-                gate = kind
-                symbols[q1] = f'─{gate}-'
-                symbols[q2] = f'-{gate}─'
+            if kind in ('MXX', 'MZZ', 'MX', 'MZ'):
+                if kind in ('MXX', 'MZZ'):
+                    q1, q2 = qubits
+                    gate = kind
+                    symbols[q1] = f'─{gate}-'
+                    symbols[q2] = f'-{gate}─'
+                elif kind in ('MX', 'MZ'):
+                    q = qubits[0]
+                    label = 'M-X' if kind == 'MX' else 'M-Z'
+                    symbols[q] = f'─{label}'
                 for i in range(len(clines)):
                     clines[i] += f" {self.cregs[i]}  " if i == meta else "     "
             elif kind in ('cZ', 'cX'):
