@@ -68,7 +68,7 @@ def test_GHZ4():
 
 def test_FANOUT():
     print("Testing FANOUT")
-    n_trgts = 2
+    n_trgts = 3
     n_shots = 100
     # plus = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
     ghz_state = get_GHZ_state(n_trgts)
@@ -77,7 +77,7 @@ def test_FANOUT():
 
     for ctrl_bit, ctrl_state in enumerate(base01):
         for bits in all_trgt_bitstrings:
-            # print(f"======================= Testing {b0}, {b2} ============================== ")
+            print(f"======================= Testing {ctrl_bit=}, target={bits} ============================== ")
             # all_basis_states = [[base01[bit]] for bit in bits]
             perm = []
             for i in range(n_trgts):
@@ -131,7 +131,7 @@ def test_FANOUT():
 
 
 def test_CNOT2():
-    print("Testing CNOT 2")
+    print("Testing CNOT 2, deprecated")
     n_trgts = 1
 
     q1 = basis(2, 0)
