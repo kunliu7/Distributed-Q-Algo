@@ -2,8 +2,10 @@
 import itertools
 
 from qutip import *
+from tqdm import tqdm
 
 from dqalgo.simulators.qutip_simulator import QTCircuit
+from dqalgo.simulators.utils import get_GHZ_state
 
 
 def test_Bell_pair():
@@ -66,20 +68,31 @@ def test_GHZ4():
 
 def test_FANOUT():
     print("Testing FANOUT")
-    n_trgts = 1
-    n_shots = 1000
-    plus = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
+    n_trgts = 2
+    n_shots = 100
+    # plus = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
+    ghz_state = get_GHZ_state(n_trgts)
     base01 = [basis(2, 0), basis(2, 1)]
     all_trgt_bitstrings = list(itertools.product([0, 1], repeat=n_trgts))
 
     for ctrl_bit, ctrl_state in enumerate(base01):
         for bits in all_trgt_bitstrings:
             # print(f"======================= Testing {b0}, {b2} ============================== ")
-            all_basis_states = [[plus, base01[bit]] for bit in bits]
-            print(f"all_basis_states: {all_basis_states}")
-            for _ in range(n_shots):
-                init_state = tensor([ctrl_state] + list(itertools.chain(*all_basis_states)))
-                print(f"\n{init_state=}\n")
+            # all_basis_states = [[base01[bit]] for bit in bits]
+            perm = []
+            for i in range(n_trgts):
+                perm.append(i)          # GHZ_i
+                perm.append(i + n_trgts)  # Q_i
+
+            # print(f"perm: {perm}")
+            all_basis_states = tensor([ghz_state] + [base01[bit] for bit in bits])
+            # print(f"all_basis_states: {all_basis_states}")
+            all_basis_states = all_basis_states.permute(perm)
+
+            # print(f"all_basis_states: {all_basis_states}")
+            for _ in tqdm(range(n_shots)):
+                init_state = tensor([ctrl_state, all_basis_states])
+                # print(f"\n{init_state=}\n")
 
                 circ = QTCircuit(n_qubits=2*n_trgts + 1, n_clbits=3*n_trgts+1, init_state=init_state)
                 circ.M_ZZ(0, 1, 1)  # m1
@@ -94,21 +107,21 @@ def test_FANOUT():
                     s = 0
                     for k in range(n_trgts):
                         s += cregs[3*k + 2]  # m2
-                        print(f"cregs[{3*k + 2}]: {cregs[3*k + 2]}")
+                        # print(f"cregs[{3*k + 2}]: {cregs[3*k + 2]}")
                     return s % 2 == 1
 
                 circ.c_Z(0, _correction_condition_on_ctrl)  # m2
-                circ.draw()
+                # circ.draw()
                 final_state = circ.get_state()
                 selected_qubits = [2*j for j in range(n_trgts+1)]
-                print(f"selected_qubits: {selected_qubits}")
+                # print(f"selected_qubits: {selected_qubits}")
                 final_state = final_state.ptrace(selected_qubits)
-                print(f"\n{final_state=}\n")
+                # print(f"\n{final_state=}\n")
                 target_bits = [(ctrl_bit + origin_trgt_bit) % 2 for origin_trgt_bit in bits]
-                print(f"original: {ctrl_bit}{bits} -> target: {ctrl_bit}{target_bits}")
+                # print(f"original: {ctrl_bit}{bits} -> target: {ctrl_bit}{target_bits}")
                 target_state = tensor([ctrl_state] + [base01[target_bit]
                                       for target_bit in target_bits]).unit()
-                print(f"\n{target_state=}\n")
+                # print(f"\n{target_state=}\n")
                 target_state = ket2dm(target_state)
                 fidelity_val = fidelity(final_state, target_state)
                 assert fidelity_val > 0.99999  # Should be very close to 1
