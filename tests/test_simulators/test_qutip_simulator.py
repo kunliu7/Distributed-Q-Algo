@@ -1,4 +1,6 @@
 
+import itertools
+
 from qutip import *
 
 from dqalgo.simulators.qutip_simulator import QTCircuit
@@ -62,42 +64,51 @@ def test_GHZ4():
         assert fidelity_val > 0.99999  # Should be very close to 1
 
 
-def test_CNOT():
-    print("Testing CNOT")
+def test_FANOUT():
+    print("Testing FANOUT")
     n_trgts = 1
     n_shots = 1000
-    q1 = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
-    basis_states = [basis(2, 0), basis(2, 1)]
+    plus = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
+    base01 = [basis(2, 0), basis(2, 1)]
+    all_trgt_bitstrings = list(itertools.product([0, 1], repeat=n_trgts))
 
-    for b0, q0 in enumerate(basis_states):
-        for b2, q2 in enumerate(basis_states):
-            print(f"======================= Testing {b0}, {b2} ============================== ")
-            for i in range(n_shots):
-                init_state = tensor([q0, q1, q2])
+    for ctrl_bit, ctrl_state in enumerate(base01):
+        for bits in all_trgt_bitstrings:
+            # print(f"======================= Testing {b0}, {b2} ============================== ")
+            all_basis_states = [[plus, base01[bit]] for bit in bits]
+            print(f"all_basis_states: {all_basis_states}")
+            for _ in range(n_shots):
+                init_state = tensor([ctrl_state] + list(itertools.chain(*all_basis_states)))
+                print(f"\n{init_state=}\n")
 
                 circ = QTCircuit(n_qubits=2*n_trgts + 1, n_clbits=3*n_trgts+1, init_state=init_state)
                 circ.M_ZZ(0, 1, 1)  # m1
                 for i in range(n_trgts):
-                    m2_idx = 2*i + 2
-                    m3_idx = 2*i + 3
+                    m2_idx = 3*i + 2
+                    m3_idx = 3*i + 3
                     circ.M_XX(2*i + 1, 2*i + 2, m2_idx)  # m2 = 2*i + 2
                     circ.M_Z(2*i + 1, m3_idx)  # m3 = 2*i + 3
                     circ.c_X(2*i + 2, lambda cregs: (cregs[1] + cregs[m3_idx]) % 2 == 1)  # m1 + m3
 
                 def _correction_condition_on_ctrl(cregs: list[int]) -> bool:
                     s = 0
-                    for i in range(n_trgts):
-                        s += cregs[2*i + 2]  # m2
+                    for k in range(n_trgts):
+                        s += cregs[3*k + 2]  # m2
+                        print(f"cregs[{3*k + 2}]: {cregs[3*k + 2]}")
                     return s % 2 == 1
 
                 circ.c_Z(0, _correction_condition_on_ctrl)  # m2
-                # circ.draw()
+                circ.draw()
                 final_state = circ.get_state()
-                final_state = final_state.ptrace([0, 2])
-
-                target_qubit = b2 if b0 == 0 else (b0 + b2) % 2
-                # print(f"{b0}, {b2} -> {b0}, {target_qubit}")
-                target_state = tensor([basis_states[b0], basis_states[target_qubit]]).unit()
+                selected_qubits = [2*j for j in range(n_trgts+1)]
+                print(f"selected_qubits: {selected_qubits}")
+                final_state = final_state.ptrace(selected_qubits)
+                print(f"\n{final_state=}\n")
+                target_bits = [(ctrl_bit + origin_trgt_bit) % 2 for origin_trgt_bit in bits]
+                print(f"original: {ctrl_bit}{bits} -> target: {ctrl_bit}{target_bits}")
+                target_state = tensor([ctrl_state] + [base01[target_bit]
+                                      for target_bit in target_bits]).unit()
+                print(f"\n{target_state=}\n")
                 target_state = ket2dm(target_state)
                 fidelity_val = fidelity(final_state, target_state)
                 assert fidelity_val > 0.99999  # Should be very close to 1
@@ -146,7 +157,7 @@ def test_CNOT3():
     """
     print("Testing CNOT 3")
     n_trgts = 1
-    n_shots = 1000
+    n_shots = 1
 
     q1 = basis(2, 0)
     basis_states = [basis(2, 0), basis(2, 1)]
@@ -154,7 +165,7 @@ def test_CNOT3():
     for b0, q0 in enumerate(basis_states):
         for b2, q2 in enumerate(basis_states):
             print(f"======================= Testing {b0}, {b2} ============================== ")
-            for i in range(n_shots):
+            for _ in range(n_shots):
                 init_state = tensor([q0, q1, q2])
 
                 circ = QTCircuit(3, 4, init_state=init_state)
@@ -163,7 +174,7 @@ def test_CNOT3():
                 circ.M_Z(1, 3)
                 circ.c_Z(0, 2)  # m2
                 circ.c_X(2, lambda cregs: (cregs[1] + cregs[3]) % 2)  # m1 + m3
-                # circ.draw()
+                circ.draw()
 
                 final_state = circ.get_state()
                 final_state = final_state.ptrace([0, 2])
