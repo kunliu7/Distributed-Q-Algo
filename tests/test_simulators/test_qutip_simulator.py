@@ -65,35 +65,45 @@ def test_GHZ4():
 def test_CNOT():
     print("Testing CNOT")
     n_trgts = 1
-
+    n_shots = 1000
     q1 = (basis(2, 0) + basis(2, 1)).unit()  # |+⟩ state
     basis_states = [basis(2, 0), basis(2, 1)]
 
     for b0, q0 in enumerate(basis_states):
         for b2, q2 in enumerate(basis_states):
             print(f"======================= Testing {b0}, {b2} ============================== ")
-            init_state = tensor([q0, q1, q2])
+            for i in range(n_shots):
+                init_state = tensor([q0, q1, q2])
 
-            circ = QTCircuit(n_qubits=2*n_trgts + 1, n_clbits=3*n_trgts+1, init_state=init_state)
-            circ.M_ZZ(0, 1, 1)
-            for i in range(n_trgts):
-                circ.M_XX(2*i + 1, 2*i + 2, 2*i + 2)
-                circ.M_Z(2*i + 1, 2*i + 3)
-                circ.c_Z(2*i + 2, 2*i + 2)
+                circ = QTCircuit(n_qubits=2*n_trgts + 1, n_clbits=3*n_trgts+1, init_state=init_state)
+                circ.M_ZZ(0, 1, 1)  # m1
+                for i in range(n_trgts):
+                    m2_idx = 2*i + 2
+                    m3_idx = 2*i + 3
+                    circ.M_XX(2*i + 1, 2*i + 2, m2_idx)  # m2 = 2*i + 2
+                    circ.M_Z(2*i + 1, m3_idx)  # m3 = 2*i + 3
+                    circ.c_X(2*i + 2, lambda cregs: (cregs[1] + cregs[m3_idx]) % 2 == 1)  # m1 + m3
 
-            circ.c_X(0, lambda cregs: (cregs[1] + cregs[3]) % 2 == 1)
-            circ.draw()
-            final_state = circ.get_state()
-            final_state = final_state.ptrace([0, 2])
+                def _correction_condition_on_ctrl(cregs: list[int]) -> bool:
+                    s = 0
+                    for i in range(n_trgts):
+                        s += cregs[2*i + 2]  # m2
+                    return s % 2 == 1
 
-            target_qubit = b2 if b0 == 0 else (b0 + b2) % 2
-            print(f"{b0}, {b2} -> {b0}, {target_qubit}")
-            target_state = tensor([basis_states[b0], basis_states[target_qubit]]).unit()
-            target_state = ket2dm(target_state)
-            fidelity_val = fidelity(final_state, target_state)
-            print(f"Fidelity with target state {b0}, {target_qubit}: {fidelity_val:.6f}")
-            print(f"msmt result: {circ.cregs}")
-            print(final_state)
+                circ.c_Z(0, _correction_condition_on_ctrl)  # m2
+                # circ.draw()
+                final_state = circ.get_state()
+                final_state = final_state.ptrace([0, 2])
+
+                target_qubit = b2 if b0 == 0 else (b0 + b2) % 2
+                # print(f"{b0}, {b2} -> {b0}, {target_qubit}")
+                target_state = tensor([basis_states[b0], basis_states[target_qubit]]).unit()
+                target_state = ket2dm(target_state)
+                fidelity_val = fidelity(final_state, target_state)
+                assert fidelity_val > 0.99999  # Should be very close to 1
+                # print(f"Fidelity with target state {b0}, {target_qubit}: {fidelity_val:.6f}")
+                # print(f"msmt result: {circ.cregs}")
+                # print(final_state)
 
 
 def test_CNOT2():
