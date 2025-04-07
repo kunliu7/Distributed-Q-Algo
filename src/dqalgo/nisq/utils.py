@@ -1,3 +1,5 @@
+from qiskit_aer.noise import NoiseModel, ReadoutError, depolarizing_error
+
 
 def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_reg_name: str,
                         reg_names: list[str]) -> dict[str, int]:
@@ -23,3 +25,23 @@ def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_re
         reg_bits = bitstring[start:end][::-1]
         reg_counts[reg_bits] = reg_counts.get(reg_bits, 0) + count
     return reg_counts
+
+
+def get_depolarizing_noise_model(
+    p_1q: float, p_2q: float, p_meas: float,
+) -> NoiseModel:
+    """Get a depolarizing noise model.
+
+    Args:
+        p_1q (float): the probability of a 1-qubit depolarizing noise
+        p_2q (float): the probability of a 2-qubit depolarizing noise
+        p_meas (float): the probability of a measurement noise
+    """
+    noise_model = NoiseModel()
+    if p_1q > 0:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(p_1q, 1), ['u1', 'u2', 'u3'])
+    if p_2q > 0:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(p_2q, 2), ['cx'])
+    if p_meas > 0:
+        noise_model.add_all_qubit_readout_error(ReadoutError([[1-p_meas, p_meas], [p_meas, 1-p_meas]]))
+    return noise_model
