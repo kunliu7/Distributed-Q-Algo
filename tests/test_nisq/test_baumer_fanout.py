@@ -58,23 +58,26 @@ def test_baumer_fanout_stim_noisy():
     p1 = p2 / 10
     pm = p2
     print(f"p1: {p1}, p2: {p2}, pm: {pm}")
+    n_shots = 100000
     for n_trgts in [4, 6, 8]:
         ctrl_bit = 0
         print(f"n_trgts: {n_trgts}, ctrl_bit: {ctrl_bit}")
+        keep_ids = list(range(0, 2*n_trgts+1, 2))  # data qubits, including control qubit
         # for init_trgt_bits in itertools.product([0, 1], repeat=n_trgts):
         init_trgt_bits = [0] * n_trgts
         # print(f"init_trgt_bits: {init_trgt_bits}")
-        ideal_simulator, _ = BaumerFanoutBuilder(n_trgts=n_trgts, ctrl_bit=ctrl_bit,
-                                                 init_trgt_bits=list(init_trgt_bits)).build_in_stim()
-        ideal_inv_tab = ideal_simulator.current_inverse_tableau()
+        ideal_simulator, _ = BaumerFanoutBuilder(
+            n_trgts=n_trgts, ctrl_bit=ctrl_bit, init_trgt_bits=list(init_trgt_bits)).build_in_stim()
+        ideal_inv_tableau = ideal_simulator.current_inverse_tableau()
         error_counts = {}
-        for _ in range(100000):
+
+        for _ in range(n_shots):
             builder = BaumerFanoutBuilder(n_trgts=n_trgts, ctrl_bit=ctrl_bit,
                                           init_trgt_bits=list(init_trgt_bits),
                                           p1=p1, p2=p2, pm=pm)
             noisy_simulator, _ = builder.build_in_stim()
-            noisy_inv_tab = noisy_simulator.current_inverse_tableau()
-            pauli_error = (ideal_inv_tab.inverse() * noisy_inv_tab).to_pauli_string()
+            noisy_inv_tableau = noisy_simulator.current_inverse_tableau()
+            pauli_error = (ideal_inv_tableau.inverse() * noisy_inv_tableau).to_pauli_string()
             remaining_pauli_error = pauli_error[::2]  # remove ancillary qubits
             # print(f"remaining_pauli_error: {remaining_pauli_error}, pauli_error: {pauli_error}")
 
@@ -82,4 +85,11 @@ def test_baumer_fanout_stim_noisy():
             if remaining_pauli_error != stim.PauliString("I"*(n_trgts+1)):
                 key = str(remaining_pauli_error)
                 error_counts[key] = error_counts.get(key, 0) + 1
-        print(error_counts)
+
+        # Sort error_counts by value in descending order and get top 5
+        top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        print("Top 5 errors:")
+        for error, count in top_errors:
+            print(f"  {error}: {count}/{n_shots}")
+        # print("All errors:")
+        # print(error_counts)
