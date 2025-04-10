@@ -8,11 +8,15 @@ class BaseFanoutBuilder:
 
 
 class BaumerFanoutBuilder(BaseFanoutBuilder):
-    def __init__(self, n_trgts: int, ctrl_bit: int, init_trgt_bits: list[int]):
+    def __init__(self, n_trgts: int, ctrl_bit: int, init_trgt_bits: list[int],
+                 p1: float = 0.0, p2: float = 0.0, pm: float = 0.0):
         self.n_trgts = n_trgts
         # rightmost bit is the control qubit/0-th qubit
         input_bits = [reg for pair in zip(init_trgt_bits, [0] * n_trgts) for reg in pair] + [ctrl_bit]
         self.init_bitstr = "".join(map(str, input_bits))
+        self.p1 = p1
+        self.p2 = p2
+        self.pm = pm
 
     def build_w_more_cnots(self) -> QuantumCircuit:
         """Fig. 11, last figure, Baumer et al."""
@@ -191,9 +195,11 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
         for i in range(0, self.n_trgts, 2):
             anc_i = 1 + 2 * i  # index for ancilla i
             sim.h(anc_i)
+            self.apply_1q_gate_error(sim, anc_i)
             if i < self.n_trgts - 1:
                 anc_next = 1 + 2 * (i + 1)
                 sim.cx(anc_i, anc_next)
+                self.apply_2q_gate_error(sim, anc_i, anc_next)
 
         # --- Step 2: Entangle every ancilla with its target ---
         # For i in range(n_trgts): apply CNOT from ancilla a_i to target t_i.
@@ -201,6 +207,7 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
             anc_i = 1 + 2 * i
             tgt_i = 2 + 2 * i
             sim.cx(anc_i, tgt_i)
+            self.apply_2q_gate_error(sim, anc_i, tgt_i)
 
         # --- Step 3: Entangle pairs of Bell pairs ---
         # For i in range(1, n_trgts - 1, 2): apply CNOT from ancilla a_i to ancilla a_{i+1}.
@@ -208,9 +215,11 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
             anc_i = 1 + 2 * i
             anc_next = 1 + 2 * (i + 1)
             sim.cx(anc_i, anc_next)
+            self.apply_2q_gate_error(sim, anc_i, anc_next)
 
         # --- Step 4: CNOT from control to first ancilla ---
         sim.cx(0, 1)  # control (index 0) to ancilla a_0 (index 1)
+        self.apply_2q_gate_error(sim, 0, 1)
 
         # --- Step 5: Measure all ancillae (with a Hadamard on every odd-indexed ancilla) ---
         # In Qiskit: if i is odd, apply H then measure.
@@ -219,6 +228,8 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
             anc_i = 1 + 2 * i
             if i % 2 == 1:
                 sim.h(anc_i)
+                self.apply_1q_gate_error(sim, anc_i)
+            self.apply_measurement_error(sim, anc_i)
             m = sim.measure(anc_i)  # measurement returns 0 or 1
             ancilla_meas[i] = m  # store measurement for ancilla i
 
@@ -233,7 +244,7 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
 
         if parity_for_Z_on_ctrl == 1:
             sim.z(0)  # apply Z on control (qubit 0) if parity is 1
-
+            self.apply_1q_gate_error(sim, 0)
         # --- Step 7-2: Conditional X on targets based on cumulative XOR of even-indexed ancilla measurements ---
         # For even-indexed ancillas, compute a cumulative XOR and use it as the condition.
         cumulative = 0
@@ -247,18 +258,35 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
             if condition == 1:
                 tgt_i = 2 + 2 * i
                 sim.x(tgt_i)
+                self.apply_1q_gate_error(sim, tgt_i)
                 if i < self.n_trgts - 1:
                     # Also apply X to the next target (corresponding to the next ancilla pair)
                     tgt_next = 2 + 2 * (i + 1)
                     sim.x(tgt_next)
+                    self.apply_1q_gate_error(sim, tgt_next)
 
         # --- Final Measurements ---
         ctrl_meas = int(sim.measure(0))
         target_meas = [int(sim.measure(2 + 2 * i)) for i in range(self.n_trgts)]
 
         # Return the measurement outcomes.
-        return {
+        return sim, {
             # "ancilla_measurements": ancilla_meas,
             "control_measurement": ctrl_meas,
             "target_measurements": target_meas,
         }
+
+    def apply_1q_gate_error(self, sim: stim.TableauSimulator, qid: int):
+        """Apply a 1-qubit gate error to the qubit at index qid."""
+        if self.p1 > 0:
+            sim.depolarize1(qid, p=self.p1)
+
+    def apply_2q_gate_error(self, sim: stim.TableauSimulator, qid1: int, qid2: int):
+        """Apply a 2-qubit gate error to the qubits at indices qid1 and qid2."""
+        if self.p2 > 0:
+            sim.depolarize2(qid1, qid2, p=self.p2)
+
+    def apply_measurement_error(self, sim: stim.TableauSimulator, qid: int):
+        """Apply a measurement error to the qubit at index qid."""
+        if self.pm > 0:
+            sim.x_error(qid, p=self.pm)
