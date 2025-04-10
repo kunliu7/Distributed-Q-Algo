@@ -27,10 +27,9 @@ class BaumerFanoutBuilder(BaseFanoutBuilder):
         qc = QuantumCircuit(ctrl, *all_regs, ctrl_creg, anc_cregs, tgt_cregs)
         qc.initialize(self.init_bitstr)
 
-        qc.measure(ctrl, ctrl_creg)
         for i in range(self.n_trgts):
             qc.measure(tgts[i], tgt_cregs[i])
-            qc.measure(ancs[i], anc_cregs[i])    # return qc
+            qc.measure(ancs[i], anc_cregs[i])
 
         for i in range(0, n_ancs, 2):
             # step 1
