@@ -1,3 +1,4 @@
+import stim
 from qiskit_aer.noise import NoiseModel, ReadoutError, depolarizing_error
 
 
@@ -45,3 +46,28 @@ def get_depolarizing_noise_model(
     if p_meas > 0:
         noise_model.add_all_qubit_readout_error(ReadoutError([[1-p_meas, p_meas], [p_meas, 1-p_meas]]))
     return noise_model
+
+
+def reduce_stabilizers(stabs: list[stim.PauliString], keep_ids: list[int]) -> list[stim.PauliString]:
+    reduced = []
+    for stab in stabs:
+        # Convert to string representation.
+        full_str = str(stab)
+        # Build the reduced Pauli string using only the kept indices.
+        # (Make sure the ordering is what you expect.)
+        pauli_str = full_str[1:]
+        sign = full_str[0]
+        # print(f"pauli_str: {pauli_str}, sign: {sign}")
+        reduced_pauli_str = "".join(pauli_str[i] for i in keep_ids)
+        # Optionally, you might skip generators that become trivial.
+        if set(reduced_pauli_str) != {"_"}:
+            # print(f"{stab=}, reduced_pauli_str: {reduced_pauli_str}, set(reduced_pauli_str): {set(reduced_pauli_str)}")
+            reduced.append(stim.PauliString(sign + reduced_pauli_str))
+    print(f"reduced: {reduced}")
+    return reduced
+
+
+def reduce_tableau(tab: stim.Tableau, keep_ids: list[int]) -> stim.Tableau:
+    stabs = tab.to_stabilizers()
+    reduced_stabs = reduce_stabilizers(stabs, keep_ids)
+    return stim.Tableau.from_stabilizers(reduced_stabs, allow_redundant=True)
