@@ -61,7 +61,7 @@ def test_baumer_fanout_stim_noisy():
     n_shots = 100000
     for n_trgts in [4, 6, 8]:
         ctrl_bit = 0
-        print(f"n_trgts: {n_trgts}, ctrl_bit: {ctrl_bit}")
+        print(f"=========n_trgts: {n_trgts}, ctrl_bit: {ctrl_bit} ===========")
         keep_ids = list(range(0, 2*n_trgts+1, 2))  # data qubits, including control qubit
         # for init_trgt_bits in itertools.product([0, 1], repeat=n_trgts):
         init_trgt_bits = [0] * n_trgts

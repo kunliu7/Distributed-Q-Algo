@@ -57,7 +57,7 @@ class QTCircuit:
     def c_Z(self, q: int, condition: Callable | int) -> None:
         flag = self._process_condition(condition)
         if flag:
-            print(f"c_Z({q}, {condition}) = {flag}")
+            # print(f"c_Z({q}, {condition}) = {flag}")
             ops: list = [qeye(2)] * self.n
             ops[q] = sigmaz()
             Z_op: Qobj = tensor(ops)
@@ -67,7 +67,7 @@ class QTCircuit:
     def c_X(self, q: int, condition: Callable | int) -> None:
         flag = self._process_condition(condition)
         if flag:
-            print(f"c_X({q}, {condition}) = {flag}")
+            # print(f"c_X({q}, {condition}) = {flag}")
             ops: list = [qeye(2)] * self.n
             ops[q] = sigmax()
             X_op: Qobj = tensor(ops)
