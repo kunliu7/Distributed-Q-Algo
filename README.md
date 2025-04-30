@@ -32,3 +32,12 @@ add these two commands at the top cell of your .ipynb:
 ```
 
 This will autoreload your modification.
+
+## How to run tests
+
+For one test:
+```bash
+pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
+```
+
+`-s` is to display `print` message in the test.
