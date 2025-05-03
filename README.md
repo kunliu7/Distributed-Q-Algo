@@ -10,7 +10,7 @@ conda create -n your_env_name python=3.12
 
 2. Install dependencies:
 ```bash
-pip install -r .
+pip install -r requirements.txt
 ```
 
 3. Git clone this repository, and `cd` into the folder, and install this package locally:
