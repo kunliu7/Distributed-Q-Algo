@@ -3,37 +3,30 @@ import itertools
 import time
 
 from dqalgo.data_mgr import NISQFanoutDataMgr
-from dqalgo.nisq.eval import get_truth_table_tomography_for_Fanout
-from dqalgo.nisq.utils import get_depolarizing_noise_model
+from dqalgo.nisq.eval import eval_Baumer_Fanout
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_trgts", "-t", type=int, nargs="+", default=[3])
-    parser.add_argument("--p_2q", "-p2", type=float, nargs="+", default=[0.0])
-    parser.add_argument("--n_shots", "-s", type=int, default=2048)
+    parser.add_argument("--n_trgts", "-t", type=int, nargs="+", default=[4, 6, 8])
+    parser.add_argument("--p2", type=float, nargs="+", default=[0.001, 0.003, 0.005])
+    parser.add_argument("--n_shots", "-s", type=int, default=100000)
     args = parser.parse_args()
 
-    time_start = time.time()
-
-    input_to_fid_lst = []
-    for n_trgts, p_2q in itertools.product(args.n_trgts, args.p_2q):
-        print(f"============ Testing {n_trgts} targets with p_2q={p_2q} =============")
-        p_1q = p_2q / 10
-        p_meas = p_2q
-        noise_model = get_depolarizing_noise_model(p_1q=p_1q, p_2q=p_2q, p_meas=p_meas)
-
-        input_to_fid = get_truth_table_tomography_for_Fanout(
-            n_trgts, noise_model, args.n_shots,
-        )
-
-        input_to_fid_lst.append(input_to_fid)
-
     dmgr = NISQFanoutDataMgr()
-    dmgr.save((input_to_fid_lst, args.n_trgts, args.p_2q),
-              n_trgts=args.n_trgts, p_2q=args.p_2q)
-    time_end = time.time()
-    print(f"Time taken: {time_end - time_start} seconds")
+    error_counts_lst = []
+    for n_trgts, p2 in itertools.product(args.n_trgts, args.p2):
+        time_start = time.time()
+        p1 = p2 / 10
+        pm = p2
+        print(f"n_trgts: {n_trgts}, p1: {p1}, p2: {p2}, pm: {pm}")
+        error_counts = eval_Baumer_Fanout(n_trgts, p1, p2, pm, args.n_shots)
+        # print(error_counts)
+        error_counts_lst.append(error_counts)
+        dmgr.save((error_counts_lst, args.n_trgts, args.p2),
+                  n_trgts=args.n_trgts, p2=args.p2, n_shots=args.n_shots)
+        time_end = time.time()
+        print(f"Time taken: {time_end - time_start} seconds")
 
 
 if __name__ == "__main__":
