@@ -2,10 +2,13 @@
 import itertools
 
 import numpy as np
+import stim
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
+from tqdm import tqdm
 
 from .circuits import get_Fanout_circ_by_GHZ_w_reset
+from .fanouts import BaumerFanoutBuilder
 from .utils import get_register_counts
 
 
@@ -61,3 +64,32 @@ def get_truth_table_tomography_for_Fanout(
         input_to_fid[init_bitstr] = fid
 
     return input_to_fid
+
+
+def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: int
+                       ) -> dict[str, int]:
+    """Evaluate the Baumer Fanout circuit with the given noise parameters.
+
+    Returns:
+        dict[str, int]: error counts, e.g. {'XZ': 100, 'YZ': 100}
+    """
+    ctrl_bit = 0
+    init_trgt_bits = [0] * n_trgts
+    ideal_simulator, _ = BaumerFanoutBuilder(
+        n_trgts=n_trgts, ctrl_bit=ctrl_bit, init_trgt_bits=list(init_trgt_bits)).build_in_stim()
+    ideal_inv_tableau = ideal_simulator.current_inverse_tableau()
+    error_counts = {}
+
+    for _ in tqdm(range(n_shots), desc=f"Sim {n_trgts=}, {p2=}"):
+        builder = BaumerFanoutBuilder(n_trgts=n_trgts, ctrl_bit=ctrl_bit,
+                                      init_trgt_bits=list(init_trgt_bits),
+                                      p1=p1, p2=p2, pm=pm)
+        noisy_simulator, _ = builder.build_in_stim()
+        noisy_inv_tableau = noisy_simulator.current_inverse_tableau()
+        pauli_error = (noisy_inv_tableau.inverse() * ideal_inv_tableau).to_pauli_string()
+        remaining_pauli_error = pauli_error[::2]  # remove ancillary qubits
+        if remaining_pauli_error != stim.PauliString("I"*(n_trgts+1)):
+            key = str(remaining_pauli_error)
+            error_counts[key] = error_counts.get(key, 0) + 1
+
+    return error_counts
