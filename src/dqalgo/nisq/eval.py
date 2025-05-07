@@ -7,7 +7,7 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from tqdm import tqdm
 
-from .circuits import get_Fanout_circ_by_GHZ_w_reset
+from .circuits import get_Fanout_circ_by_GHZ_w_reset, get_parallel_toffoli_via_fanout_circ
 from .fanouts import BaumerFanoutBuilder
 from .utils import get_register_counts
 
@@ -57,7 +57,7 @@ def get_truth_table_tomography_for_Fanout(
 
         counts = AerSimulator(noise_model=noise_model).run(
             qc, shots=n_shots).result().get_counts()
-        reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
+        reg_counts = get_register_counts(counts, [n_qubits], 't', ['t'])
         noisy_counts = normalize_counts(reg_counts)
 
         fid = compute_classical_fidelity(ideal_counts, noisy_counts)
@@ -93,3 +93,39 @@ def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: i
             error_counts[key] = error_counts.get(key, 0) + 1
 
     return error_counts
+
+def get_truth_table_tomography_for_parallel_toffoli(
+    n_trgts: int,
+    noise_model: NoiseModel,
+    n_shots: int,
+) -> dict[str, float]:
+    n_qubits = 2*n_trgts + 1
+
+    input_to_fid: dict[str, float] = {}
+    for init_bits in itertools.product([0, 1], repeat=n_qubits):
+        # in QuantumCircuit.initialize, leftmost bit is the (N-1)-th qubit, and rightmost bit is the 0-th qubit
+        # here rightmost bit is the control qubit
+        ctrl_bit_1 = init_bits[-1]
+        ctrl_bits_2 = init_bits[:n_trgts]
+        trgt_bits = init_bits[n_trgts:-1]
+        init_bitstr = "".join(map(str, init_bits))
+        expected_trgt_bits = [int((trgt_bit + (ctrl_bit_1 * ctrl_bit_2) % 2)) for ctrl_bit_2, trgt_bit in zip(ctrl_bits_2, trgt_bits)]
+        expected_trgt_bitstr = "".join(map(str, expected_trgt_bits + ctrl_bits_2 + [ctrl_bit_1]))
+        initial_state = [reg for pair in zip([0] * n_qubits, init_bits) for reg in pair]
+
+        qc = get_parallel_toffoli_via_fanout_circ(n_trgts)
+        # counts = AerSimulator(max_parallel_threads=max_parallel_threads).run(
+        #     qc, shots=n_shots).result().get_counts()
+        # reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
+        # ideal_counts = normalize_counts(reg_counts)
+        ideal_counts = {expected_trgt_bitstr: 1.0}
+
+        counts = AerSimulator(noise_model=noise_model).run(
+            qc, shots=n_shots).result().get_counts()
+        reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
+        noisy_counts = normalize_counts(reg_counts)
+
+        fid = compute_classical_fidelity(ideal_counts, noisy_counts)
+        input_to_fid[init_bitstr] = fid
+
+    return input_to_fid

@@ -1,5 +1,7 @@
 from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit.classical import expr
+from qiskit.circuit.library import UnitaryGate
+import numpy as np
 
 
 def apply_GHZ_prep_circ_w_reset(
@@ -86,4 +88,84 @@ def get_Fanout_circ_by_GHZ_w_reset(n_tgts: int, init_bitstr: str | None = None, 
     if meas_all:
         for i in range(n_GHZ):
             qc.measure(qubits[i], qubit_cregs[i])
+    return qc
+
+def get_fanout_gate_by_custom_unitary(n_tgts: int) -> UnitaryGate:
+    """
+    Creates fanout gate circuit from unitary matrix to be used as a blackbox
+    """
+    n = n_tgts + 1  # total qubits
+    dim = 2**n
+    U = np.zeros((dim, dim))
+
+    # Create the unitary matrix for the fanout operation
+    for i in range(dim):
+        bits = [(i >> k) & 1 for k in range(n)]  # little-endian
+        ctrl = bits[0]  # qubit 0 is control
+        new_bits = bits.copy()
+        if ctrl:
+            for t in range(1, n):  # flip all target bits
+                new_bits[t] ^= 1
+        j = sum(b << k for k, b in enumerate(new_bits))
+        U[j, i] = 1
+
+    return UnitaryGate(U, label=f"{n_tgts}-fanout")
+
+def get_parallel_toffoli_via_fanout_circ(n_tgts: int, init_bitstr: str | None = None, meas_all: bool = False) -> QuantumCircuit:
+    """
+    Red circuit from Fig. 5(e) of Distributed Quantum Signal Processing
+    """
+    n_toffoli = 2*n_tgts + 1
+
+    n_fanout = get_fanout_gate_by_custom_unitary(n_tgts)
+    two_n_fanout = get_fanout_gate_by_custom_unitary(2*n_tgts)
+
+    # circuit with noise
+    qc = QuantumCircuit(n_toffoli)
+    qubit_cregs = ClassicalRegister(n_toffoli, f'data_cregs')
+
+    if init_bitstr is not None:
+        qc.initialize(init_bitstr)
+
+    all_indices = qc.qubits
+    ctrl1_idx = [all_indices[0]]
+    ctrl2_idx = all_indices[1:n_tgts+1]
+    targ_idx = all_indices[n_tgts+1:]
+
+
+    # tdg^n is periodic mod 8 so no need to aply more than 2 gates
+    if n_tgts % 8 == 1:
+        qc.tdg(ctrl1_idx)
+    elif n_tgts % 8 == 2:
+        qc.sdg(ctrl1_idx)
+    elif n_tgts % 8 == 3:
+        qc.tdg(ctrl1_idx)
+        qc.sdg(ctrl1_idx)
+    elif n_tgts % 8 == 4:
+        qc.z(ctrl1_idx)
+    elif n_tgts % 8 == 5:
+        qc.t(ctrl1_idx)
+        qc.s(ctrl1_idx)
+    elif n_tgts % 8 == 6:
+        qc.s(ctrl1_idx)
+    else:
+        qc.t(ctrl1_idx)
+
+    qc.tdg(ctrl2_idx)
+    qc.h(targ_idx)
+    qc.cx(targ_idx, ctrl2_idx)
+    qc.append(n_fanout, ctrl1_idx + targ_idx)
+    qc.t(ctrl2_idx + targ_idx)
+    qc.append(two_n_fanout, all_indices)
+    qc.tdg(ctrl2_idx)
+    qc.cx(targ_idx, ctrl2_idx)
+    qc.t(ctrl2_idx)
+    qc.tdg(targ_idx)
+    qc.append(n_fanout, ctrl1_idx + ctrl2_idx)
+    qc.h(targ_idx)
+
+    if meas_all:
+        for i in range(n_toffoli):
+            qc.measure(all_indices[i], qubit_cregs[i])
+
     return qc
