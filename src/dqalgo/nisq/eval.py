@@ -57,7 +57,7 @@ def get_truth_table_tomography_for_Fanout(
 
         counts = AerSimulator(noise_model=noise_model).run(
             qc, shots=n_shots).result().get_counts()
-        reg_counts = get_register_counts(counts, [n_qubits], 't', ['t'])
+        reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
         noisy_counts = normalize_counts(reg_counts)
 
         fid = compute_classical_fidelity(ideal_counts, noisy_counts)
@@ -122,7 +122,7 @@ def get_truth_table_tomography_for_parallel_toffoli(
 
         counts = AerSimulator(noise_model=noise_model).run(
             qc, shots=n_shots).result().get_counts()
-        reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
+        reg_counts = get_register_counts(counts, [n_qubits], 't', ['t'])
         noisy_counts = normalize_counts(reg_counts)
 
         fid = compute_classical_fidelity(ideal_counts, noisy_counts)
