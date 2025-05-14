@@ -41,3 +41,27 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ```
 
 `-s` is to display `print` message in the test.
+
+## Generate error distribution of Fanout
+
+1. Generation
+```bash
+python scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
+```
+Read the script to see how to customize number of targets, error rates and shots.
+The data will be saved at `data/nisq/fanout/` by `NISQFanoutDataMgr`.
+
+2. Read
+
+See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's 
+Tableau` section.
+```python
+n_trgts_lst = [4, 6, 8]
+p2s = [0.001, 0.003, 0.005]
+n_shots = 100000
+
+dmgr = NISQFanoutDataMgr()
+data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
+error_counts_lst, _, _ = data
+print(error_counts_lst)
+```
