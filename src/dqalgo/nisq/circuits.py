@@ -2,6 +2,7 @@ from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 from qiskit.circuit.classical import expr
 from qiskit.circuit.library import UnitaryGate
 import numpy as np
+from dqalgo.nisq.utils import add_fanout_monte_carlo_error
 
 
 def apply_GHZ_prep_circ_w_reset(
@@ -111,42 +112,47 @@ def get_fanout_gate_by_custom_unitary(n_tgts: int) -> UnitaryGate:
 
     return UnitaryGate(U, label=f"{n_tgts}-fanout")
 
-def get_parallel_toffoli_via_fanout_circ(n_tgts: int, init_bitstr: str | None = None, meas_all: bool = False) -> QuantumCircuit:
+def get_parallel_toffoli_via_fanout_circ(
+        n_trgts: int,
+        init_bitstr: str | None = None,
+        meas_all: bool = False,
+        n_fanout_errors: tuple[str, float] | None = None,
+        two_n_fanout_errors: tuple[str, float] | None = None,
+    ) -> QuantumCircuit:
     """
     Red circuit from Fig. 5(e) of Distributed Quantum Signal Processing
     """
-    n_toffoli = 2*n_tgts + 1
+    n_toffoli = 2*n_trgts + 1
 
-    n_fanout = get_fanout_gate_by_custom_unitary(n_tgts)
-    two_n_fanout = get_fanout_gate_by_custom_unitary(2*n_tgts)
+    n_fanout = get_fanout_gate_by_custom_unitary(n_trgts)
+    two_n_fanout = get_fanout_gate_by_custom_unitary(2*n_trgts)
 
-    # circuit with noise
-    qc = QuantumCircuit(n_toffoli)
+    qubits = [QuantumRegister(1, f't{i}') for i in range(n_toffoli)]
     qubit_cregs = ClassicalRegister(n_toffoli, f'data_cregs')
+
+    qc = QuantumCircuit(*qubits, qubit_cregs)
+
+    ctrl1_idx = [qc.qubits[0]]
+    ctrl2_idx = qc.qubits[1:n_trgts+1]
+    targ_idx = qc.qubits[n_trgts+1:]
 
     if init_bitstr is not None:
         qc.initialize(init_bitstr)
 
-    all_indices = qc.qubits
-    ctrl1_idx = [all_indices[0]]
-    ctrl2_idx = all_indices[1:n_tgts+1]
-    targ_idx = all_indices[n_tgts+1:]
-
-
     # tdg^n is periodic mod 8 so no need to aply more than 2 gates
-    if n_tgts % 8 == 1:
+    if n_trgts % 8 == 1:
         qc.tdg(ctrl1_idx)
-    elif n_tgts % 8 == 2:
+    elif n_trgts % 8 == 2:
         qc.sdg(ctrl1_idx)
-    elif n_tgts % 8 == 3:
+    elif n_trgts % 8 == 3:
         qc.tdg(ctrl1_idx)
         qc.sdg(ctrl1_idx)
-    elif n_tgts % 8 == 4:
+    elif n_trgts % 8 == 4:
         qc.z(ctrl1_idx)
-    elif n_tgts % 8 == 5:
+    elif n_trgts % 8 == 5:
         qc.t(ctrl1_idx)
         qc.s(ctrl1_idx)
-    elif n_tgts % 8 == 6:
+    elif n_trgts % 8 == 6:
         qc.s(ctrl1_idx)
     else:
         qc.t(ctrl1_idx)
@@ -154,18 +160,29 @@ def get_parallel_toffoli_via_fanout_circ(n_tgts: int, init_bitstr: str | None = 
     qc.tdg(ctrl2_idx)
     qc.h(targ_idx)
     qc.cx(targ_idx, ctrl2_idx)
+
     qc.append(n_fanout, ctrl1_idx + targ_idx)
+    if n_fanout_errors:
+        add_fanout_monte_carlo_error(qc, ctrl1_idx + targ_idx, n_fanout_errors)
+
     qc.t(ctrl2_idx + targ_idx)
-    qc.append(two_n_fanout, all_indices)
+    qc.append(two_n_fanout, qubits)
+    if two_n_fanout_errors:
+        add_fanout_monte_carlo_error(qc, qubits, two_n_fanout_errors)
+
     qc.tdg(ctrl2_idx)
     qc.cx(targ_idx, ctrl2_idx)
     qc.t(ctrl2_idx)
     qc.tdg(targ_idx)
+
     qc.append(n_fanout, ctrl1_idx + ctrl2_idx)
+    if n_fanout_errors:
+        add_fanout_monte_carlo_error(qc, ctrl1_idx + ctrl2_idx, n_fanout_errors)
+
     qc.h(targ_idx)
 
     if meas_all:
         for i in range(n_toffoli):
-            qc.measure(all_indices[i], qubit_cregs[i])
+            qc.measure(qubits[i], qubit_cregs[i])
 
     return qc

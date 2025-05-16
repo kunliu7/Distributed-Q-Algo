@@ -1,6 +1,7 @@
 import stim
-from qiskit_aer.noise import NoiseModel, ReadoutError, depolarizing_error
-
+from qiskit_aer.noise import NoiseModel, ReadoutError, depolarizing_error, pauli_error
+from qiskit import QuantumCircuit, QuantumRegister
+import numpy as np
 
 def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_reg_name: str,
                         reg_names: list[str]) -> dict[str, int]:
@@ -46,6 +47,19 @@ def get_depolarizing_noise_model(
     if p_meas > 0:
         noise_model.add_all_qubit_readout_error(ReadoutError([[1-p_meas, p_meas], [p_meas, 1-p_meas]]))
     return noise_model
+
+
+def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
+    for pauli_str, prob in error_probs:
+        if np.random.rand() < prob:
+            # Apply the Pauli error to the qubits in the specified indices.
+            for i, qubit_index in enumerate(qubit_indices):
+                if pauli_str[i] == "X":
+                    qc.x(qubit_index)
+                elif pauli_str[i] == "Y":
+                    qc.y(qubit_index)
+                elif pauli_str[i] == "Z":
+                    qc.z(qubit_index)
 
 
 def reduce_stabilizers(stabs: list[stim.PauliString], keep_ids: list[int]) -> list[stim.PauliString]:

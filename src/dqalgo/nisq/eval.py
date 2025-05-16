@@ -55,8 +55,7 @@ def get_truth_table_tomography_for_Fanout(
         # ideal_counts = normalize_counts(reg_counts)
         ideal_counts = {expected_trgt_bitstr: 1.0}
 
-        counts = AerSimulator(noise_model=noise_model).run(
-            qc, shots=n_shots).result().get_counts()
+        counts = AerSimulator(noise_model=noise_model).run(qc, shots=n_shots).result().get_counts()
         reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
         noisy_counts = normalize_counts(reg_counts)
 
@@ -96,7 +95,6 @@ def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: i
 
 def get_truth_table_tomography_for_parallel_toffoli(
     n_trgts: int,
-    noise_model: NoiseModel,
     n_shots: int,
 ) -> dict[str, float]:
     n_qubits = 2*n_trgts + 1
@@ -109,21 +107,14 @@ def get_truth_table_tomography_for_parallel_toffoli(
         ctrl_bits_2 = init_bits[:n_trgts]
         trgt_bits = init_bits[n_trgts:-1]
         init_bitstr = "".join(map(str, init_bits))
-        expected_trgt_bits = [int((trgt_bit + (ctrl_bit_1 * ctrl_bit_2) % 2)) for ctrl_bit_2, trgt_bit in zip(ctrl_bits_2, trgt_bits)]
+        expected_trgt_bits = [int(((trgt_bit + (ctrl_bit_1 * ctrl_bit_2)) % 2)) for ctrl_bit_2, trgt_bit in zip(ctrl_bits_2, trgt_bits)]
         expected_trgt_bitstr = "".join(map(str, expected_trgt_bits + ctrl_bits_2 + [ctrl_bit_1]))
         initial_state = [reg for pair in zip([0] * n_qubits, init_bits) for reg in pair]
 
-        qc = get_parallel_toffoli_via_fanout_circ(n_trgts)
-        # counts = AerSimulator(max_parallel_threads=max_parallel_threads).run(
-        #     qc, shots=n_shots).result().get_counts()
-        # reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
-        # ideal_counts = normalize_counts(reg_counts)
         ideal_counts = {expected_trgt_bitstr: 1.0}
 
-        counts = AerSimulator(noise_model=noise_model).run(
-            qc, shots=n_shots).result().get_counts()
-        reg_counts = get_register_counts(counts, [n_qubits], 't', ['t'])
-        noisy_counts = normalize_counts(reg_counts)
+        builder = ParallelToffoliBuilder(n_trgts, ctrl_bit_1, ctrl_bits_2, trgt_bits)
+        noisy_counts = builder.simulate(initial_state, shots=n_shots)
 
         fid = compute_classical_fidelity(ideal_counts, noisy_counts)
         input_to_fid[init_bitstr] = fid
