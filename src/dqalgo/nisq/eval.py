@@ -155,7 +155,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float) -> tuple[float, float]:
 
     fids = []
     noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
-    sim = AerSimulator(noise_model=noise_model, device='GPU')
+    sim = AerSimulator(noise_model=noise_model)
 
     print('Constructing circuits')
 

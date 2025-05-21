@@ -24,7 +24,7 @@ from dqalgo.nisq.fanouts import BaumerFanoutBuilder
 ```
 
 5. Use in .ipynb and modify the code
-If you modify the code in `/src` and want to test it in .ipynb, you need to 
+If you modify the code in `/src` and want to test it in .ipynb, you need to
 add these two commands at the top cell of your .ipynb:
 ```bash
 %load_ext autoreload
@@ -44,6 +44,12 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 
 ## Generate error distribution of Fanout
 
+## How to run CSWAP circuit
+To run the teledata scheme of the CSWAP run:
+```
+python ./scripts/eval_nisq_cswap.py -t 3
+```
+
 1. Generation
 ```bash
 python scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
@@ -53,7 +59,7 @@ The data will be saved at `data/nisq/fanout/` by `NISQFanoutDataMgr`.
 
 2. Read
 
-See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's 
+See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's
 Tableau` section.
 ```python
 n_trgts_lst = [4, 6, 8]
