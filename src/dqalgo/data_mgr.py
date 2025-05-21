@@ -68,3 +68,7 @@ class BaseDataMgr():
 class NISQFanoutDataMgr(BaseDataMgr):
     data_dir = "data/nisq/fanout"
     file_type = "pkl"
+
+class NISQCswapDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/cswap"
+    file_type = "csv"

@@ -7,9 +7,11 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from tqdm import tqdm
 
-from .circuits import get_Fanout_circ_by_GHZ_w_reset, get_parallel_toffoli_via_fanout_circ
+from dqalgo.nisq.experimental_noise import get_fanout_error_probs
+
+from .circuits import get_CSWAP_teledata_circ, get_Fanout_circ_by_GHZ_w_reset, get_parallel_toffoli_via_fanout_circ
 from .fanouts import BaumerFanoutBuilder
-from .utils import get_register_counts
+from .utils import classically_compute_CSWAP, get_depolarizing_noise_model, get_register_counts, sample_bitstrings, update_total_counts
 
 
 def normalize_counts(counts: dict[str, int]) -> dict[str, float]:
@@ -93,30 +95,93 @@ def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: i
 
     return error_counts
 
-def get_truth_table_tomography_for_parallel_toffoli(
-    n_trgts: int,
-    n_shots: int,
-) -> dict[str, float]:
-    n_qubits = 2*n_trgts + 1
+def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
+    n_data_qubits = 2*n_trgts + 1
+    n_ancilla_qubits = 3*n_trgts
 
-    input_to_fid: dict[str, float] = {}
-    for init_bits in itertools.product([0, 1], repeat=n_qubits):
-        # in QuantumCircuit.initialize, leftmost bit is the (N-1)-th qubit, and rightmost bit is the 0-th qubit
-        # here rightmost bit is the control qubit
-        ctrl_bit_1 = init_bits[-1]
-        ctrl_bits_2 = init_bits[:n_trgts]
-        trgt_bits = init_bits[n_trgts:-1]
-        init_bitstr = "".join(map(str, init_bits))
-        expected_trgt_bits = [int(((trgt_bit + (ctrl_bit_1 * ctrl_bit_2)) % 2)) for ctrl_bit_2, trgt_bit in zip(ctrl_bits_2, trgt_bits)]
-        expected_trgt_bitstr = "".join(map(str, expected_trgt_bits + ctrl_bits_2 + [ctrl_bit_1]))
-        initial_state = [reg for pair in zip([0] * n_qubits, init_bits) for reg in pair]
+    shots_per_circ = 128 # Crashes with anything higher than 128
+    circs_per_input = 10 # Repeat 10 times to compensate for low shots
+    n_samples = 150 # Sample space gets large so choose 150 random input bitstrings
+    n_samples = min(n_samples, 2**n_data_qubits)
 
-        ideal_counts = {expected_trgt_bitstr: 1.0}
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
-        builder = ParallelToffoliBuilder(n_trgts, ctrl_bit_1, ctrl_bits_2, trgt_bits)
-        noisy_counts = builder.simulate(initial_state, shots=n_shots)
+    fids = []
+    noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
+    sim = AerSimulator(noise_model=noise_model)
 
-        fid = compute_classical_fidelity(ideal_counts, noisy_counts)
-        input_to_fid[init_bitstr] = fid
+    print('Constructing circuits')
 
-    return input_to_fid
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples):
+        expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+        ideal_counts = {expected_output_bitstr: 1.0}
+
+        total_counts = {}
+        for _ in range(circs_per_input):
+            qc = get_CSWAP_teledata_circ(
+                input_bitstr=input_bitstr,
+                meas_all=True,
+                n_fanout_errors=n_fanout_errors,
+                two_n_fanout_errors=two_n_fanout_errors
+            )
+
+            results = sim.run(qc, shots=shots_per_circ).result()
+            counts = results.get_counts()
+            reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+            update_total_counts(total_counts, reg_counts)
+
+        normed_noisy_counts = normalize_counts(total_counts)
+        fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+        fids.append(fid)
+
+    mean_fid = np.mean(fids)
+    stddev_fid = np.std(fids)
+
+    return mean_fid, stddev_fid
+
+
+def eval_CSWAP_telegate(n_trgts: int, p_err: float) -> tuple[float, float]:
+    n_data_qubits = 2*n_trgts + 1
+    n_ancilla_qubits = 2*n_trgts
+
+    shots_per_circ = 128 # Crashes with anything higher than 128
+    circs_per_input = 10 # Repeat 10 times to compensate for low shots
+    n_samples = 150 # Sample space gets large so choose 150 random input bitstrings
+    n_samples = min(n_samples, 2**n_data_qubits)
+
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
+
+    fids = []
+    noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuits')
+
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples):
+        expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+        ideal_counts = {expected_output_bitstr: 1.0}
+
+        total_counts = {}
+        for _ in range(circs_per_input):
+            qc = get_CSWAP_teledata_circ(
+                input_bitstr=input_bitstr,
+                meas_all=True,
+                n_fanout_errors=n_fanout_errors,
+                two_n_fanout_errors=two_n_fanout_errors
+            )
+
+            results = sim.run(qc, shots=shots_per_circ).result()
+            counts = results.get_counts()
+            reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+            update_total_counts(total_counts, reg_counts)
+
+        normed_noisy_counts = normalize_counts(total_counts)
+        fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+        fids.append(fid)
+
+    mean_fid = np.mean(fids)
+    stddev_fid = np.std(fids)
+
+    return mean_fid, stddev_fid
