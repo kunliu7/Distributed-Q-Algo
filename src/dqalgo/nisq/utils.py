@@ -2,6 +2,7 @@ import stim
 from qiskit_aer.noise import NoiseModel, ReadoutError, depolarizing_error, pauli_error
 from qiskit import QuantumCircuit, QuantumRegister
 import numpy as np
+import random
 
 def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_reg_name: str,
                         reg_names: list[str]) -> dict[str, int]:
@@ -94,3 +95,35 @@ def reduce_tableau(tab: stim.Tableau, keep_ids: list[int]) -> stim.Tableau:
     stabs = tab.to_stabilizers()
     reduced_stabs = reduce_stabilizers(stabs, keep_ids)
     return stim.Tableau.from_stabilizers(reduced_stabs, allow_redundant=True)
+
+def sample_bitstrings(n_qubits: int, n_samples: int):
+    sample_indices = random.sample(range(2**n_qubits), min(2**n_qubits, n_samples))
+    for index in sample_indices:
+        yield bin(index)[2:].zfill(n_qubits)
+
+def update_total_counts(total_counts: dict[str, int], sub_counts: dict[str, int]) -> None:
+    for k, v in sub_counts.items():
+        if k not in total_counts:
+            total_counts[k] = 0
+
+        total_counts[k] += v
+
+def classically_compute_toffoli(input_bitstr: str | list[int]) -> str:
+    n_trgts = (len(input_bitstr) - 1)//2
+    ctrl_bit_1 = input_bitstr[-1]
+    ctrl_bits_2 = list(input_bitstr[n_trgts:-1])
+    trgt_bits = list(input_bitstr[:n_trgts])
+    expected_target_bits = [int(((int(trgt_bit) + (int(ctrl_bit_1) * int(ctrl_bit_2))) % 2)) for ctrl_bit_2, trgt_bit in zip(ctrl_bits_2, trgt_bits)]
+    return ''.join(map(str, expected_target_bits + ctrl_bits_2 + [ctrl_bit_1]))
+
+def classically_compute_CSWAP(input_bitstr: str | list[int]) -> str:
+    n_trgts = (len(input_bitstr) - 1)//2
+    ctrl_bit = int(input_bitstr[-1])
+    state_A = list(input_bitstr[n_trgts:-1])
+    state_B = list(input_bitstr[:n_trgts])
+    expected_bitstr = (
+            (state_B + state_A + [ctrl_bit])
+            if ctrl_bit == 0
+            else (state_A + state_B + [ctrl_bit])
+        )
+    return ''.join(map(str, expected_bitstr))
