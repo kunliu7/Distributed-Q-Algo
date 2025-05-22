@@ -42,12 +42,13 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 
 `-s` is to display `print` message in the test.
 
-## Generate error distribution of Fanout
-
 ## How to run CSWAP circuit
 To run the teledata scheme of the CSWAP run:
 ```
 python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001
+
+## Generate error distribution of Fanout
+
 ```
 
 1. Generation

@@ -9,7 +9,12 @@ from tqdm import tqdm
 
 from dqalgo.nisq.experimental_noise import get_fanout_error_probs
 
-from .circuits import get_CSWAP_teledata_circ, get_Fanout_circ_by_GHZ_w_reset, get_parallel_toffoli_via_fanout_circ
+from .circuits import (
+    get_CSWAP_teledata_circ,
+    get_CSWAP_telegate_circ,
+    get_Fanout_circ_by_GHZ_w_reset,
+)
+
 from .fanouts import BaumerFanoutBuilder
 from .utils import classically_compute_CSWAP, get_depolarizing_noise_model, get_register_counts, sample_bitstrings, update_total_counts
 
@@ -141,13 +146,11 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
     return mean_fid, stddev_fid
 
 
-def eval_CSWAP_telegate(n_trgts: int, p_err: float) -> tuple[float, float]:
+def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150) -> tuple[float, float]:
+    # The script seems to crash with anything higher than 128 shots
     n_data_qubits = 2*n_trgts + 1
     n_ancilla_qubits = 2*n_trgts
 
-    shots_per_circ = 128 # Crashes with anything higher than 128
-    circs_per_input = 10 # Repeat 10 times to compensate for low shots
-    n_samples = 150 # Sample space gets large so choose 150 random input bitstrings
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
@@ -165,7 +168,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float) -> tuple[float, float]:
 
         total_counts = {}
         for _ in range(circs_per_input):
-            qc = get_CSWAP_teledata_circ(
+            qc = get_CSWAP_telegate_circ(
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
