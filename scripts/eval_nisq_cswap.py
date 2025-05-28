@@ -1,10 +1,13 @@
 import argparse
 import itertools
 import time
+
 import pandas as pd
 
 from dqalgo.data_mgr import NISQCswapDataMgr
 from dqalgo.nisq.eval import eval_CSWAP_teledata, eval_CSWAP_telegate
+from dqalgo.nisq.eval_cswap import (eval_CSWAP_teledata_parallel,
+                                    eval_CSWAP_telegate_parallel)
 
 
 def main():
@@ -14,15 +17,22 @@ def main():
     parser.add_argument("--n_shots", type=int, nargs=1, default=128)
     parser.add_argument("--iters_per_input", type=int, nargs=1, default=10)
     parser.add_argument("--n_samples", type=int, nargs=1, default=150)
+    parser.add_argument("--parallel", default=False, action="store_true")
     parser.add_argument("--method", type=str, nargs=1, default="telegate", choices=["teledata", "telegate"])
 
     args = parser.parse_args()
     if args.method == "teledata":
         print("Using teledata method")
-        eval_func = eval_CSWAP_teledata
+        if args.parallel:
+            eval_func = eval_CSWAP_teledata_parallel
+        else:
+            eval_func = eval_CSWAP_teledata
     else:
         print("Using telegate method")
-        eval_func = eval_CSWAP_telegate
+        if args.parallel:
+            eval_func = eval_CSWAP_telegate_parallel
+        else:
+            eval_func = eval_CSWAP_telegate
 
     dmgr = NISQCswapDataMgr()
     fid_data = []
