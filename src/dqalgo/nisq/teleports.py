@@ -3,6 +3,7 @@
 import itertools
 
 import stim
+from tqdm import tqdm
 
 
 def apply_Bell_pair_prep(circ: stim.Circuit, bell_A: list[int], bell_B: list[int]) -> None:
@@ -143,3 +144,22 @@ class TeleportCircBuilder:
         """Apply a measurement error to the qubit at index qid."""
         if self.pm > 0:
             sim.x_error(qid, p=self.pm)
+
+def eval_teleport_circ(n: int, p1: float, p2: float, pm: float, n_shots: int, verbose: bool = False) -> dict[str, int]:
+    ideal_sim = TeleportCircBuilder(n).sim
+    ideal_inv_tableau = ideal_sim.current_inverse_tableau()
+    error_counts = {}
+    for i in tqdm(range(n_shots), desc=f"{n=}, {p2=}", disable=not verbose):
+        builder = TeleportCircBuilder(n, p1, p2, pm)
+        noisy_sim = builder.sim
+        noisy_inv_tableau = noisy_sim.current_inverse_tableau()
+        pauli_error = (ideal_inv_tableau.inverse() * noisy_inv_tableau).to_pauli_string()
+        remaining_pauli_error = pauli_error[3*n:4*n]
+
+        if remaining_pauli_error != stim.PauliString("I"*n):
+            key = str(remaining_pauli_error)
+            error_counts[key] = error_counts.get(key, 0) + 1
+        else:
+            assert remaining_pauli_error == stim.PauliString("I"*n)
+    
+    return error_counts
