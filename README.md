@@ -72,3 +72,49 @@ data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
 error_counts_lst, _, _ = data
 print(error_counts_lst)
 ```
+
+## Generate error distribution of Quantum Teleportation
+
+1. Generation
+```bash
+python scripts/eval_nisq_teleport.py -t 6 --p2 0.001 -s 1024
+```
+Read the script to see how to customize number of targets, error rates and shots.
+The data will be saved at `data/nisq/teleport/` by `NISQTeleportDataMgr`.
+
+2. Read
+
+See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval Teleportation circuit using Stim.TableauSimulator` section.
+```python
+n_trgts_lst = [4, 6, 8]
+p2s = [0.001, 0.003, 0.005]
+n_shots = 100000
+
+dmgr = NISQTeleportDataMgr()
+data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
+error_counts_lst, _, _ = data
+print(error_counts_lst)
+```
+
+## Generate error distribution of telegate
+
+1. Generation
+```bash
+python scripts/eval_nisq_telegate.py -t 6 --p2 0.001 -s 1024
+```
+Read the script to see how to customize number of targets, error rates and shots.
+The data will be saved at `data/nisq/telegate/` by `NISQTelegateDataMgr`.
+
+2. Read
+
+See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval telegate` section.
+```python
+n_trgts_lst = [4, 6, 8]
+p2s = [0.001, 0.003, 0.005]
+n_shots = 100000
+
+dmgr = NISQTelegateDataMgr()
+data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
+error_counts_lst, _, _ = data
+print(error_counts_lst)
+```
