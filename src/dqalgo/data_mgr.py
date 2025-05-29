@@ -76,3 +76,7 @@ class NISQCswapDataMgr(BaseDataMgr):
 class NISQTeleportDataMgr(BaseDataMgr):
     data_dir = "data/nisq/teleport"
     file_type = "pkl"
+
+class NISQTelegateDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/telegate"
+    file_type = "pkl"

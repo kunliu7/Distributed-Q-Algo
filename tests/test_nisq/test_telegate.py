@@ -1,27 +1,29 @@
 
+
+
 import numpy as np
 import pytest
 import stim
 from tqdm import tqdm
 
-from dqalgo.nisq.teleports import TeleportCircBuilder
+from dqalgo.nisq.telegates import TelegateCircBuilder
 
 
 @pytest.mark.parametrize("n", [3, 4, 5])
 @pytest.mark.parametrize("p2", [0.000, 0.005])
-def test_teleport_circuit(n: int, p2: float):
+def test_telegate_circuit(n: int, p2: float):
     n_shots = 1000
     p1 = p2/10
     pm = p2
-    ideal_sim = TeleportCircBuilder(n).sim
+    ideal_sim = TelegateCircBuilder(n).sim
     ideal_inv_tableau = ideal_sim.current_inverse_tableau()
     error_counts = {}
     for i in tqdm(range(n_shots), desc=f"{n=}, {p2=}"):
-        builder = TeleportCircBuilder(n, p1, p2, pm)
+        builder = TelegateCircBuilder(n, p1, p2, pm)
         noisy_sim = builder.sim
         noisy_inv_tableau = noisy_sim.current_inverse_tableau()
         pauli_error = (ideal_inv_tableau.inverse() * noisy_inv_tableau).to_pauli_string()
-        remaining_pauli_error = pauli_error[3*n:4*n]
+        remaining_pauli_error = pauli_error[2*n:3*n]
         if np.isclose(p2, 0.0):
             assert remaining_pauli_error == stim.PauliString("I"*n)
 

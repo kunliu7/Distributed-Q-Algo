@@ -110,11 +110,14 @@ class TeleportCircBuilder:
             q_out = self.output_qubits[i]
 
             self.sim.cx(q_in, q_anc)
+            self.apply_2q_gate_error(self.sim, q_in, q_anc)
             self.sim.h(q_in)
-            m_in = self.sim.measure(q_in)
+            self.apply_1q_gate_error(self.sim, q_in)
+            
             self.apply_measurement_error(self.sim, q_in)
-            m_anc = self.sim.measure(q_anc)
+            m_in = self.sim.measure(q_in)
             self.apply_measurement_error(self.sim, q_anc)
+            m_anc = self.sim.measure(q_anc)
             self.measurement_results.append((m_in, m_anc))
 
             if m_in:
@@ -128,6 +131,7 @@ class TeleportCircBuilder:
             q_out = self.output_qubits[i]
             q_anc = self.anc_qubits[i]
             self.sim.cx(q_out, q_anc)
+            self.apply_2q_gate_error(self.sim, q_out, q_anc)
         
 
     def apply_1q_gate_error(self, sim: stim.TableauSimulator, qid: int):
