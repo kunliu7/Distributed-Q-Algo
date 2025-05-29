@@ -45,7 +45,7 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ## How to run CSWAP circuit
 To run the teledata scheme of the CSWAP run:
 ```
-python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001
+python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --scheme teledata
 
 ```
 
