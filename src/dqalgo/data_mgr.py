@@ -80,3 +80,7 @@ class NISQTeleportDataMgr(BaseDataMgr):
 class NISQTelegateDataMgr(BaseDataMgr):
     data_dir = "data/nisq/telegate"
     file_type = "pkl"
+
+class NISQParallelCNOTsDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/parallel_cnots"
+    file_type = "pkl"
