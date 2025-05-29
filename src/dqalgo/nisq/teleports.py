@@ -113,7 +113,7 @@ class TeleportCircBuilder:
             self.apply_2q_gate_error(self.sim, q_in, q_anc)
             self.sim.h(q_in)
             self.apply_1q_gate_error(self.sim, q_in)
-            
+
             self.apply_measurement_error(self.sim, q_in)
             m_in = self.sim.measure(q_in)
             self.apply_measurement_error(self.sim, q_anc)
