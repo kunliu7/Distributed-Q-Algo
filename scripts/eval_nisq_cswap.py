@@ -6,16 +6,18 @@ import pandas as pd
 
 from dqalgo.data_mgr import NISQCswapDataMgr
 from dqalgo.nisq.eval import eval_CSWAP_teledata, eval_CSWAP_telegate
-from dqalgo.nisq.eval_cswap import (eval_CSWAP_teledata_parallel,
-                                    eval_CSWAP_telegate_parallel)
+from dqalgo.nisq.eval_cswap import (
+    eval_CSWAP_teledata_parallel,
+    eval_CSWAP_telegate_parallel
+)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_trgts", "-t", type=int, nargs="+", default=[2])
     parser.add_argument("--p2", type=float, nargs="+", default=[0.001])
-    parser.add_argument("--n_shots", type=int, nargs=1, default=128)
-    parser.add_argument("--iters_per_input", type=int, nargs=1, default=10)
+    parser.add_argument("--n_shots", type=int, nargs=1, default=1024)
+    parser.add_argument("--iters_per_input", type=int, nargs=1, default=1)
     parser.add_argument("--n_samples", type=int, nargs=1, default=150)
     parser.add_argument("--parallel", default=False, action="store_true")
     parser.add_argument("--method", type=str, nargs=1, default="telegate", choices=["teledata", "telegate"])

@@ -4,13 +4,19 @@ import numpy as np
 from qiskit_aer import AerSimulator
 from tqdm import tqdm
 
-from dqalgo.nisq.circuits import (get_CSWAP_teledata_circ,
-                                  get_CSWAP_telegate_circ)
+from dqalgo.nisq.circuits import (
+    get_CSWAP_teledata_fewer_ancillas_circ,
+    get_CSWAP_telegate_fewer_ancillas_circ
+)
+
 from dqalgo.nisq.experimental_noise import get_fanout_error_probs
-from dqalgo.nisq.utils import (classically_compute_CSWAP,
-                               get_depolarizing_noise_model,
-                               get_register_counts, sample_bitstrings,
-                               update_total_counts)
+from dqalgo.nisq.utils import (
+    classically_compute_CSWAP,
+    get_counts_of_first_n_regs,
+    get_depolarizing_noise_model,
+    sample_bitstrings,
+    update_total_counts
+)
 
 from .eval import compute_classical_fidelity, normalize_counts
 
@@ -18,8 +24,7 @@ from .eval import compute_classical_fidelity, normalize_counts
 def evaluate_single_input_teledata(args):
     input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors = args
     n_data_qubits = 2*n_trgts + 1
-    n_ancilla_qubits = 3*n_trgts
-    
+
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
     ideal_counts = {expected_output_bitstr: 1.0}
 
@@ -28,7 +33,7 @@ def evaluate_single_input_teledata(args):
 
     total_counts = {}
     for _ in range(circs_per_input):
-        qc = get_CSWAP_teledata_circ(
+        qc = get_CSWAP_teledata_fewer_ancillas_circ(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
@@ -37,7 +42,7 @@ def evaluate_single_input_teledata(args):
 
         results = sim.run(qc, shots=shots_per_circ).result()
         counts = results.get_counts()
-        reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+        reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
         update_total_counts(total_counts, reg_counts)
 
     normed_noisy_counts = normalize_counts(total_counts)
@@ -46,7 +51,7 @@ def evaluate_single_input_teledata(args):
 
 def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150, n_processes=None) -> tuple[float, float]:
     """Parallelized version of eval_CSWAP_teledata that processes input bitstrings in parallel.
-    
+
     Args:
         n_trgts: Number of target qubits
         p_err: Error probability
@@ -54,7 +59,7 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
         circs_per_input: Number of circuits per input
         n_samples: Number of input samples
         n_processes: Number of processes to use (defaults to CPU count)
-    
+
     Returns:
         tuple[float, float]: Mean and standard deviation of fidelity
     """
@@ -65,17 +70,17 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
     print('Constructing circuits')
-    
+
     # Prepare arguments for parallel processing
     eval_args = [
         (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors)
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
-    
+
     # Use number of processes specified or default to CPU count
     n_processes = n_processes if n_processes is not None else cpu_count()
     print(f'Using {n_processes} processes')
-    
+
     # Process evaluations in parallel with progress bar
     fids = []
     with Pool(processes=n_processes) as pool:
@@ -91,8 +96,7 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
 def evaluate_single_input_telegate(args):
     input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors = args
     n_data_qubits = 2*n_trgts + 1
-    n_ancilla_qubits = 2*n_trgts
-    
+
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
     ideal_counts = {expected_output_bitstr: 1.0}
 
@@ -101,7 +105,7 @@ def evaluate_single_input_telegate(args):
 
     total_counts = {}
     for _ in range(circs_per_input):
-        qc = get_CSWAP_telegate_circ(
+        qc = get_CSWAP_teledata_fewer_ancillas_circ(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
@@ -110,7 +114,7 @@ def evaluate_single_input_telegate(args):
 
         results = sim.run(qc, shots=shots_per_circ).result()
         counts = results.get_counts()
-        reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+        reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
         update_total_counts(total_counts, reg_counts)
 
     normed_noisy_counts = normalize_counts(total_counts)
@@ -119,7 +123,7 @@ def evaluate_single_input_telegate(args):
 
 def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150, n_processes=None) -> tuple[float, float]:
     """Parallelized version of eval_CSWAP_telegate that processes input bitstrings in parallel.
-    
+
     Args:
         n_trgts: Number of target qubits
         p_err: Error probability
@@ -127,7 +131,7 @@ def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
         circs_per_input: Number of circuits per input
         n_samples: Number of input samples
         n_processes: Number of processes to use (defaults to CPU count)
-    
+
     Returns:
         tuple[float, float]: Mean and standard deviation of fidelity
     """
@@ -138,17 +142,17 @@ def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
     print('Constructing circuits')
-    
+
     # Prepare arguments for parallel processing
     eval_args = [
         (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors)
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
-    
+
     # Use number of processes specified or default to CPU count
     n_processes = n_processes if n_processes is not None else cpu_count()
     print(f'Using {n_processes} processes')
-    
+
     # Process evaluations in parallel with progress bar
     fids = []
     with Pool(processes=n_processes) as pool:
@@ -158,4 +162,4 @@ def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
     mean_fid = float(np.mean(fids))
     stddev_fid = float(np.std(fids))
 
-    return mean_fid, stddev_fid 
+    return mean_fid, stddev_fid

@@ -10,13 +10,13 @@ from tqdm import tqdm
 from dqalgo.nisq.experimental_noise import get_fanout_error_probs
 
 from .circuits import (
-    get_CSWAP_teledata_circ,
-    get_CSWAP_telegate_circ,
+    get_CSWAP_teledata_fewer_ancillas_circ,
+    get_CSWAP_telegate_fewer_ancillas_circ,
     get_Fanout_circ_by_GHZ_w_reset,
 )
 
 from .fanouts import BaumerFanoutBuilder
-from .utils import classically_compute_CSWAP, get_depolarizing_noise_model, get_register_counts, sample_bitstrings, update_total_counts
+from .utils import classically_compute_CSWAP, get_counts_of_first_n_regs, get_depolarizing_noise_model, get_register_counts, sample_bitstrings, update_total_counts
 
 
 def normalize_counts(counts: dict[str, int]) -> dict[str, float]:
@@ -124,7 +124,7 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
 
         total_counts = {}
         for _ in range(circs_per_input):
-            qc = get_CSWAP_teledata_circ(
+            qc = get_CSWAP_teledata_fewer_ancillas_circ(
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
@@ -133,7 +133,7 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
 
             results = sim.run(qc, shots=shots_per_circ).result()
             counts = results.get_counts()
-            reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+            reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
             update_total_counts(total_counts, reg_counts)
 
         normed_noisy_counts = normalize_counts(total_counts)
@@ -168,7 +168,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 
         total_counts = {}
         for _ in range(circs_per_input):
-            qc = get_CSWAP_telegate_circ(
+            qc = get_CSWAP_telegate_fewer_ancillas_circ(
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
@@ -177,7 +177,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 
             results = sim.run(qc, shots=shots_per_circ).result()
             counts = results.get_counts()
-            reg_counts = get_register_counts(counts, [n_ancilla_qubits, n_data_qubits], 't', ['a', 't'])
+            reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
             update_total_counts(total_counts, reg_counts)
 
         normed_noisy_counts = normalize_counts(total_counts)

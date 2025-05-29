@@ -34,3 +34,29 @@ def get_fanout_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
 
     return errors_tuple
 
+# TODO: change these later based on data provided by @Kun
+def get_teledata_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
+    """Get the experimentally determined error probabilities for teleporting the qubits."""
+    return [('X' * (2*n_trgts), 150/100000)]
+
+def get_pre_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
+    """
+    Get the experimentally determined error probabilities for pre-toffoli step
+    of the Toffoli teleportation scheme.
+    """
+    return [('X' * (2*n_trgts), 150/100000)]
+
+def get_post_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
+    """
+    Get the experimentally determined error probabilities for post-toffoli step
+    of the Toffoli teleportation scheme.
+    """
+    return [('X' * (n_trgts), 150/100000)]
+
+def get_telecnot_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
+    """
+    Get the experimentally determined error probabilities for teleporting the CNOT gate.
+    """
+    return [('X' * (2*n_trgts), 150/100000)]
+
+

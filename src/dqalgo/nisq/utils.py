@@ -30,6 +30,24 @@ def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_re
     return reg_counts
 
 
+def get_counts_of_first_n_regs(counts: dict[str, int], n) -> dict[str, int]:
+    """If the circuit has multiple target registers, this function can be used to get the counts of a specific target register.
+
+    Args:
+        counts (dict[str, int]): the counts of the circuit, e.g. {'0000000': 100, '0000001': 100, '0000010': 100, '0000011': 100, '0000100': 100, '0000101': 100, '0000110': 100, '0000111': 100}
+        n (int): the number of bits to consider from the leftmost side
+
+    Returns:
+        dict[str, int]: the counts of the first `n` bits of the bitstrings starting from the leftmost side
+    """
+
+    reg_counts = {}
+    for bitstring, count in counts.items():
+        reg_bits = bitstring[:n]
+        reg_counts[reg_bits] = reg_counts.get(reg_bits, 0) + count
+    return reg_counts
+
+
 def get_depolarizing_noise_model(
     p_1q: float, p_2q: float, p_meas: float,
 ) -> NoiseModel:
@@ -62,7 +80,7 @@ def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[Quantum
                 elif pauli_str[i] == "Z":
                     qc.z(qubit_index)
 
-def add_fanout_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
+def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
     for pauli_str, prob in error_probs:
         fanout_error = pauli_error([
             (pauli_str, prob),
@@ -103,10 +121,7 @@ def sample_bitstrings(n_qubits: int, n_samples: int):
 
 def update_total_counts(total_counts: dict[str, int], sub_counts: dict[str, int]) -> None:
     for k, v in sub_counts.items():
-        if k not in total_counts:
-            total_counts[k] = 0
-
-        total_counts[k] += v
+        total_counts[k] = total_counts.get(k, 0) + v
 
 def classically_compute_toffoli(input_bitstr: str | list[int]) -> str:
     n_trgts = (len(input_bitstr) - 1)//2
