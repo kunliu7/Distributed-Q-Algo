@@ -11,7 +11,7 @@ def main():
     for idx in range(n_files):
         filename = f'{args.output_file_prefix}_{idx}.txt'
         with open(filename) as file:
-            fids.append(int(file.read()))
+            fids.append(float(file.read()))
 
     mean = np.mean(fids)
     std = np.std(fids)
