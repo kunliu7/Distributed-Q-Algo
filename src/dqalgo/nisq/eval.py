@@ -117,7 +117,7 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
 
     print('Constructing circuits')
 
-    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples):
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples, dynamic_ncols=False, leave=True):
         expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
         ideal_counts = {expected_output_bitstr: 1.0}
 
@@ -160,7 +160,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 
     print('Constructing circuits')
 
-    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples):
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples, dynamic_ncols=False, leave=True):
         expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
         ideal_counts = {expected_output_bitstr: 1.0}
 

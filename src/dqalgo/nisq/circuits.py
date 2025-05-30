@@ -646,10 +646,10 @@ def apply_teleported_toffoli_fewer_ancillas(
         ctrl2_regs: list[QuantumRegister],
         targ_regs: list[QuantumRegister],
         party_A_anc_regs: list[QuantumRegister],
+        party_A_anc_cregs: list[ClassicalRegister],
         n_fanout_errors: tuple[str, float] | None = None,
         two_n_fanout_errors: tuple[str, float] | None = None,
         pre_teletoffoli_errors: tuple[str, float] | None = None,
-        post_teletoffoli_errors: tuple[str, float] | None = None
     ) -> None:
         """
         Orange circuit from Fig. 5(d) of Distributed Quantum Signal Processing
@@ -673,10 +673,10 @@ def apply_teleported_toffoli_fewer_ancillas(
             two_n_fanout_errors=two_n_fanout_errors
         )
 
-        # apply a CZ instead of mid-circuit measurement and then inject the noise
-        qc.cz(party_A_anc_regs, ctrl2_regs)
-        if post_teletoffoli_errors is not None:
-            add_custom_error_injection(qc, ctrl2_regs, post_teletoffoli_errors)
+        for i in range(len(targ_regs)):
+            qc.measure(party_A_anc_regs[i], party_A_anc_cregs[i])
+            with qc.if_test((party_A_anc_regs[i], 1)): # type: ignore
+                qc.z(ctrl2_regs[i])
 
 
 # CSWAPs with fewer ancillas
@@ -764,11 +764,11 @@ def apply_CSWAP_telegate_fewer_ancillas(
         state_A: list[QuantumRegister],
         state_B: list[QuantumRegister],
         party_A_anc_regs: list[QuantumRegister],
+        party_A_anc_cregs: list[ClassicalRegister],
         n_fanout_errors: tuple[str, float] | None = None,
         two_n_fanout_errors: tuple[str, float] | None = None,
         telecnot_errors: tuple[str, float] | None = None,
         pre_teletoffoli_errors: tuple[str, float] | None = None,
-        post_teletoffoli_errors: tuple[str, float] | None = None
     ) -> None:
         """
         CSWAP circuit from Fig. 5(b) of Distributed Quantum Signal Processing. Applies
@@ -792,10 +792,10 @@ def apply_CSWAP_telegate_fewer_ancillas(
             ctrl2_regs=state_B,
             targ_regs=state_A,
             party_A_anc_regs=party_A_anc_regs,
+            party_A_anc_cregs=party_A_anc_cregs,
             n_fanout_errors=n_fanout_errors,
             two_n_fanout_errors=two_n_fanout_errors,
             pre_teletoffoli_errors=pre_teletoffoli_errors,
-            post_teletoffoli_errors=post_teletoffoli_errors
         )
 
         qc.cx(state_A, state_B)
@@ -809,7 +809,6 @@ def get_CSWAP_telegate_fewer_ancillas_circ(
         two_n_fanout_errors: tuple[str, float] | None = None,
         telecnot_errors: tuple[str, float] | None = None,
         pre_teletoffoli_errors: tuple[str, float] | None = None,
-        post_teletoffoli_errors: tuple[str, float] | None = None,
         **kwargs,
     ):
     n_qubits = len(input_bitstr)
@@ -841,11 +840,11 @@ def get_CSWAP_telegate_fewer_ancillas_circ(
         state_A=state_A_regs,
         state_B=state_B_regs,
         party_A_anc_regs=party_A_anc_regs,
+        party_A_anc_cregs=anc_cregs,
         n_fanout_errors=n_fanout_errors,
         two_n_fanout_errors=two_n_fanout_errors,
         telecnot_errors=telecnot_errors,
         pre_teletoffoli_errors=pre_teletoffoli_errors,
-        post_teletoffoli_errors=post_teletoffoli_errors
     )
 
     if meas_all:

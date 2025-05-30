@@ -1,4 +1,5 @@
 from multiprocessing import Pool, cpu_count
+import random
 
 import numpy as np
 from qiskit_aer import AerSimulator
@@ -19,6 +20,95 @@ from dqalgo.nisq.utils import (
 )
 
 from .eval import compute_classical_fidelity, normalize_counts
+
+
+def eval_CSWAP_teledata_single_thread(
+        n_trgts: int,
+        p2: float,
+        circs_per_input: int,
+        shots_per_circ: int,
+        slurm_index: int,
+        output_file_prefix: str
+    ):
+    n_data_qubits = 2*n_trgts + 1
+
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
+
+    noise_model = get_depolarizing_noise_model(p_1q=p2/10, p_2q=p2, p_meas=p2)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuit')
+
+    random_index = random.randint(0, 2**n_data_qubits)
+    input_bitstr = bin(random_index)[2:].zfill(n_data_qubits)
+
+    expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+    ideal_counts = {expected_output_bitstr: 1.0}
+
+    total_counts = {}
+    for _ in range(circs_per_input):
+        qc = get_CSWAP_teledata_fewer_ancillas_circ(
+            input_bitstr=input_bitstr,
+            meas_all=True,
+            n_fanout_errors=n_fanout_errors,
+            two_n_fanout_errors=two_n_fanout_errors
+        )
+
+        results = sim.run(qc, shots=shots_per_circ).result()
+        counts = results.get_counts()
+        reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
+        update_total_counts(total_counts, reg_counts)
+
+    normed_noisy_counts = normalize_counts(total_counts)
+    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+
+    with open(f'{output_file_prefix}_{slurm_index}.txt', 'w') as f_out:
+        f_out.write(str(fid))
+
+def eval_CSWAP_telegate_single_thread(
+        n_trgts: int,
+        p2: float,
+        circs_per_input: int,
+        shots_per_circ: int,
+        slurm_index: int,
+        output_file_prefix: str
+    ):
+    n_data_qubits = 2*n_trgts + 1
+
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
+
+    noise_model = get_depolarizing_noise_model(p_1q=p2/10, p_2q=p2, p_meas=p2)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuit')
+
+    random_index = random.randint(0, 2**n_data_qubits)
+    input_bitstr = bin(random_index)[2:].zfill(n_data_qubits)
+
+    expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+    ideal_counts = {expected_output_bitstr: 1.0}
+
+    total_counts = {}
+    for _ in range(circs_per_input):
+        qc = get_CSWAP_telegate_fewer_ancillas_circ(
+            input_bitstr=input_bitstr,
+            meas_all=True,
+            n_fanout_errors=n_fanout_errors,
+            two_n_fanout_errors=two_n_fanout_errors
+        )
+
+        results = sim.run(qc, shots=shots_per_circ).result()
+        counts = results.get_counts()
+        reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
+        update_total_counts(total_counts, reg_counts)
+
+    normed_noisy_counts = normalize_counts(total_counts)
+    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+
+    with open(f'{output_file_prefix}_{slurm_index}.txt', 'w') as f_out:
+        f_out.write(str(fid))
 
 
 def evaluate_single_input_teledata(args):
@@ -49,7 +139,7 @@ def evaluate_single_input_teledata(args):
     return compute_classical_fidelity(ideal_counts, normed_noisy_counts)
 
 
-def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150, n_processes=None) -> tuple[float, float]:
+def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=1024, circs_per_input=1, n_samples=150, n_processes=None) -> tuple[float, float]:
     """Parallelized version of eval_CSWAP_teledata that processes input bitstrings in parallel.
 
     Args:

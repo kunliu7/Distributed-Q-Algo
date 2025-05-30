@@ -66,7 +66,7 @@ def get_pre_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, 
     Get the experimentally determined error probabilities for pre-toffoli step
     of the Toffoli teleportation scheme.
     """
-    n_trgts_lst = [1,2,3,4,5,6]
+    n_trgts_lst = [1,2,3,4,5,6,7,8]
     p2s = [0.001, 0.003, 0.005]
     n_shots = 100000
 
@@ -87,12 +87,6 @@ def get_pre_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, 
 
     return errors_tuple
 
-def get_post_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
-    """
-    Get the experimentally determined error probabilities for post-toffoli step
-    of the Toffoli teleportation scheme.
-    """
-    return []
 
 def get_telecnot_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
     """

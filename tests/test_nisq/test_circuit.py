@@ -6,7 +6,6 @@ from dqalgo.nisq.eval import compute_classical_fidelity, normalize_counts
 from dqalgo.nisq.experimental_noise import (
     get_fanout_error_probs,
     get_pre_teletoffoli_error_probs,
-    get_post_teletoffoli_error_probs,
     get_telecnot_error_probs,
     get_teledata_error_probs,
 )
@@ -62,7 +61,6 @@ def get_truth_table_tomography(
         two_n_fanout_errors = None
         teledata_errors = None
         pre_teletoffoli_errors= None
-        post_teletoffoli_errors= None
         telecnot_errors = None
 
         if 'fanout' in error_types:
@@ -74,7 +72,6 @@ def get_truth_table_tomography(
 
         if 'telegate' in error_types:
             pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=n_trgts, p2=10*p_err)
-            post_teletoffoli_errors = get_post_teletoffoli_error_probs(n_trgts=n_trgts, p2=10*p_err)
             telecnot_errors = get_telecnot_error_probs(n_trgts=n_trgts, p2=10*p_err)
 
         fids = []
@@ -96,7 +93,6 @@ def get_truth_table_tomography(
                     two_n_fanout_errors=two_n_fanout_errors,
                     teledata_errors=teledata_errors,
                     pre_teletoffoli_errors=pre_teletoffoli_errors,
-                    post_teletoffoli_errors=post_teletoffoli_errors,
                     telecnot_errors=telecnot_errors
                 )
 
