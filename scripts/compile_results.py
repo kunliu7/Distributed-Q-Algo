@@ -9,7 +9,7 @@ def main():
     args = parser.parse_args()
     fids = []
     for idx in range(n_files):
-        filename = f'{args.output_file_prefix}_output_{idx}.txt'
+        filename = f'{args.output_file_prefix}_{idx}.txt'
         with open(filename) as file:
             fids.append(int(file.read()))
 
