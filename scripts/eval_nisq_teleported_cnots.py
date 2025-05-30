@@ -3,8 +3,8 @@ import argparse
 import itertools
 import time
 
-from dqalgo.data_mgr import NISQParallelCNOTsDataMgr
-from dqalgo.nisq.parallel_cnots import eval_parallel_CNOTs
+from dqalgo.data_mgr import NISQTeleportedCNOTsDataMgr
+from dqalgo.nisq.teleported_cnots import eval_teleported_CNOT_circ
 
 
 def main():
@@ -14,12 +14,14 @@ def main():
     parser.add_argument("--n_shots", "-s", type=int, default=100000)
     args = parser.parse_args()
 
-    dmgr = NISQParallelCNOTsDataMgr()
+    dmgr = NISQTeleportedCNOTsDataMgr()
     error_counts_lst = []
     for n_trgts, p2 in itertools.product(args.n_trgts, args.p2):
         time_start = time.time()
+        p1 = p2 / 10
+        pm = p2
         print(f"n_trgts: {n_trgts}, p2: {p2}")
-        error_counts = eval_parallel_CNOTs(n_trgts, p2, args.n_shots)
+        error_counts = eval_teleported_CNOT_circ(n_trgts, p1, p2, pm, args.n_shots)
         # print(error_counts)
         error_counts_lst.append(error_counts)
         dmgr.save((error_counts_lst, args.n_trgts, args.p2),

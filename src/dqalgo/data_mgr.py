@@ -73,7 +73,7 @@ class NISQCswapDataMgr(BaseDataMgr):
     data_dir = "data/nisq/cswap"
     file_type = "csv"
 
-class NISQTeleportDataMgr(BaseDataMgr):
+class NISQTeledataDataMgr(BaseDataMgr):
     data_dir = "data/nisq/teleport"
     file_type = "pkl"
 
@@ -81,6 +81,6 @@ class NISQTelegateDataMgr(BaseDataMgr):
     data_dir = "data/nisq/telegate"
     file_type = "pkl"
 
-class NISQParallelCNOTsDataMgr(BaseDataMgr):
-    data_dir = "data/nisq/parallel_cnots"
+class NISQTeleportedCNOTsDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/teleported_cnots"
     file_type = "pkl"

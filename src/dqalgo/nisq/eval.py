@@ -102,7 +102,6 @@ def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: i
 
 def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
     n_data_qubits = 2*n_trgts + 1
-    n_ancilla_qubits = 3*n_trgts
 
     shots_per_circ = 128 # Crashes with anything higher than 128
     circs_per_input = 10 # Repeat 10 times to compensate for low shots
@@ -149,7 +148,6 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float) -> tuple[float, float]:
 def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150) -> tuple[float, float]:
     # The script seems to crash with anything higher than 128 shots
     n_data_qubits = 2*n_trgts + 1
-    n_ancilla_qubits = 2*n_trgts
 
     n_samples = min(n_samples, 2**n_data_qubits)
 

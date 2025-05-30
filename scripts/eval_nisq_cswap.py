@@ -44,6 +44,7 @@ def main():
         pm = p2
         print(f"n_trgts: {n_trgts}, p1: {p1}, p2: {p2}, pm: {pm}")
         mean_fid, std_fid = eval_func(n_trgts, p1, args.n_shots, args.iters_per_input, args.n_samples)
+        print(mean_fid, std_fid)
         fid_data.append([n_trgts, p2, mean_fid, std_fid])
 
     out_df = pd.DataFrame(fid_data, columns=["n_trgts", "p2", "mean_fid", "std_fid"])

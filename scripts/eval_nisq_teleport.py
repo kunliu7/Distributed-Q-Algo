@@ -2,7 +2,7 @@ import argparse
 import itertools
 import time
 
-from dqalgo.data_mgr import NISQTeleportDataMgr
+from dqalgo.data_mgr import NISQTeledataDataMgr
 from dqalgo.nisq.teleports import eval_teleport_circ
 
 
@@ -13,7 +13,7 @@ def main():
     parser.add_argument("--n_shots", "-s", type=int, default=100000)
     args = parser.parse_args()
 
-    dmgr = NISQTeleportDataMgr()
+    dmgr = NISQTeledataDataMgr()
     error_counts_lst = []
     for n_trgts, p2 in itertools.product(args.n_trgts, args.p2):
         time_start = time.time()
