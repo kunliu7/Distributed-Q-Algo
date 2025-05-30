@@ -1,15 +1,9 @@
 import argparse
-import itertools
 import time
 
-import pandas as pd
-
-from dqalgo.data_mgr import NISQCswapDataMgr
-from dqalgo.nisq.eval import eval_CSWAP_teledata, eval_CSWAP_telegate
 from dqalgo.nisq.eval_cswap import (
-    eval_CSWAP_teledata_parallel,
     eval_CSWAP_teledata_single_thread,
-    eval_CSWAP_telegate_parallel
+    eval_CSWAP_telegate_single_thread
 )
 
 
