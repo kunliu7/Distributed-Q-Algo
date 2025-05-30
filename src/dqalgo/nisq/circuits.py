@@ -675,7 +675,7 @@ def apply_teleported_toffoli_fewer_ancillas(
 
         for i in range(len(targ_regs)):
             qc.measure(party_A_anc_regs[i], party_A_anc_cregs[i])
-            with qc.if_test((party_A_anc_regs[i], 1)): # type: ignore
+            with qc.if_test((party_A_anc_cregs[i], 1)): # type: ignore
                 qc.z(ctrl2_regs[i])
 
 
