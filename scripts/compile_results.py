@@ -11,8 +11,10 @@ def main():
     fids = []
     filenames = os.listdir()
     filenames = [f for f in filenames if '.txt' in f]
-    if len(filenames) < 150:
+    if len(filenames) < n_files:
         print('Must have >= 150 files')
+        print(filenames)
+        return
 
     for filename in filenames:
         path = f'{args.output_folder}/{filename}'
