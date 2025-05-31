@@ -6,7 +6,9 @@ from dqalgo.nisq.eval_cswap import (
     eval_CSWAP_telegate_single_thread
 )
 
-
+"""
+A single job to be executed by HPC
+"""
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_trgts", "-t", type=int, default=4)

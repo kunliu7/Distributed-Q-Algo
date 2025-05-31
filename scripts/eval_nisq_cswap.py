@@ -16,11 +16,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_trgts", "-t", type=int, nargs="+", default=[2])
     parser.add_argument("--p2", type=float, nargs="+", default=[0.001])
-    parser.add_argument("--n_shots", type=int, nargs=1, default=1024)
-    parser.add_argument("--iters_per_input", type=int, nargs=1, default=1)
-    parser.add_argument("--n_samples", type=int, nargs=1, default=150)
+    parser.add_argument("--n_shots", type=int, default=256)
+    parser.add_argument("--iters_per_input", type=int, default=8)
+    parser.add_argument("--n_samples", type=int, default=300)
     parser.add_argument("--parallel", default=False, action="store_true")
-    parser.add_argument("--method", type=str, nargs=1, default="telegate", choices=["teledata", "telegate"])
+    parser.add_argument("--method", type=str, default="telegate", choices=["teledata", "telegate"])
 
     args = parser.parse_args()
     if args.method == "teledata":
