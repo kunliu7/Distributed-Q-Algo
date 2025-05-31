@@ -9,7 +9,7 @@ def main():
 
     args = parser.parse_args()
     fids = []
-    filenames = os.listdir()
+    filenames = os.listdir(args.output_folder)
     filenames = [f for f in filenames if '.txt' in f]
     if len(filenames) < n_files:
         print('Must have >= 150 files')
