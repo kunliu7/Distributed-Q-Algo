@@ -7,9 +7,16 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from tqdm import tqdm
 
-from .circuits import get_Fanout_circ_by_GHZ_w_reset
+from dqalgo.nisq.experimental_noise import get_fanout_error_probs
+
+from .circuits import (
+    get_CSWAP_teledata_fewer_ancillas_circ,
+    get_CSWAP_telegate_fewer_ancillas_circ,
+    get_Fanout_circ_by_GHZ_w_reset,
+)
+
 from .fanouts import BaumerFanoutBuilder
-from .utils import get_register_counts
+from .utils import classically_compute_CSWAP, get_counts_of_first_n_regs, get_depolarizing_noise_model, get_register_counts, sample_bitstrings, update_total_counts
 
 
 def normalize_counts(counts: dict[str, int]) -> dict[str, float]:
@@ -55,8 +62,7 @@ def get_truth_table_tomography_for_Fanout(
         # ideal_counts = normalize_counts(reg_counts)
         ideal_counts = {expected_trgt_bitstr: 1.0}
 
-        counts = AerSimulator(noise_model=noise_model).run(
-            qc, shots=n_shots).result().get_counts()
+        counts = AerSimulator(noise_model=noise_model).run(qc, shots=n_shots).result().get_counts()
         reg_counts = get_register_counts(counts, [2*n_qubits, n_qubits], 't', ['a', 't'])
         noisy_counts = normalize_counts(reg_counts)
 
@@ -93,3 +99,86 @@ def eval_Baumer_Fanout(n_trgts: int, p1: float, p2: float, pm: float, n_shots: i
             error_counts[key] = error_counts.get(key, 0) + 1
 
     return error_counts
+
+def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150) -> tuple[float, float]:
+    n_data_qubits = 2*n_trgts + 1
+    n_samples = min(n_samples, 2**n_data_qubits)
+
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
+
+    fids = []
+    noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuits')
+
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples, dynamic_ncols=False, leave=True):
+        expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+        ideal_counts = {expected_output_bitstr: 1.0}
+
+        total_counts = {}
+        for _ in range(circs_per_input):
+            qc = get_CSWAP_teledata_fewer_ancillas_circ(
+                input_bitstr=input_bitstr,
+                meas_all=True,
+                n_fanout_errors=n_fanout_errors,
+                two_n_fanout_errors=two_n_fanout_errors
+            )
+
+            results = sim.run(qc, shots=shots_per_circ).result()
+            counts = results.get_counts()
+            reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
+            update_total_counts(total_counts, reg_counts)
+
+        normed_noisy_counts = normalize_counts(total_counts)
+        fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+        fids.append(fid)
+
+    mean_fid = np.mean(fids)
+    stddev_fid = np.std(fids)
+
+    return mean_fid, stddev_fid
+
+
+def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_per_input=10, n_samples=150) -> tuple[float, float]:
+    # The script seems to crash with anything higher than 128 shots
+    n_data_qubits = 2*n_trgts + 1
+
+    n_samples = min(n_samples, 2**n_data_qubits)
+
+    n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
+
+    fids = []
+    noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuits')
+
+    for input_bitstr in tqdm(sample_bitstrings(n_data_qubits, n_samples), total=n_samples, dynamic_ncols=False, leave=True):
+        expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
+        ideal_counts = {expected_output_bitstr: 1.0}
+
+        total_counts = {}
+        for _ in range(circs_per_input):
+            qc = get_CSWAP_telegate_fewer_ancillas_circ(
+                input_bitstr=input_bitstr,
+                meas_all=True,
+                n_fanout_errors=n_fanout_errors,
+                two_n_fanout_errors=two_n_fanout_errors
+            )
+
+            results = sim.run(qc, shots=shots_per_circ).result()
+            counts = results.get_counts()
+            reg_counts = get_counts_of_first_n_regs(counts, n_data_qubits)
+            update_total_counts(total_counts, reg_counts)
+
+        normed_noisy_counts = normalize_counts(total_counts)
+        fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+        fids.append(fid)
+
+    mean_fid = np.mean(fids)
+    stddev_fid = np.std(fids)
+
+    return mean_fid, stddev_fid

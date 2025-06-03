@@ -68,3 +68,19 @@ class BaseDataMgr():
 class NISQFanoutDataMgr(BaseDataMgr):
     data_dir = "data/nisq/fanout"
     file_type = "pkl"
+
+class NISQCswapDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/cswap"
+    file_type = "csv"
+
+class NISQTeledataDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/teleport"
+    file_type = "pkl"
+
+class NISQTelegateDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/telegate"
+    file_type = "pkl"
+
+class NISQTeleportedCNOTsDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/teleported_cnots"
+    file_type = "pkl"
