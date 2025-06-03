@@ -61,18 +61,14 @@ def eval_CSWAP_teledata_single_thread(
         update_total_counts(total_counts, reg_counts)
 
     normed_noisy_counts = normalize_counts(total_counts)
-    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+    return compute_classical_fidelity(ideal_counts, normed_noisy_counts)
 
-    with open(f'{output_file_prefix}_{slurm_index}.txt', 'w') as f_out:
-        f_out.write(str(fid))
 
 def eval_CSWAP_telegate_single_thread(
         n_trgts: int,
         p2: float,
         circs_per_input: int,
         shots_per_circ: int,
-        slurm_index: int,
-        output_file_prefix: str
     ):
     n_data_qubits = 2*n_trgts + 1
 
@@ -105,10 +101,7 @@ def eval_CSWAP_telegate_single_thread(
         update_total_counts(total_counts, reg_counts)
 
     normed_noisy_counts = normalize_counts(total_counts)
-    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
-
-    with open(f'{output_file_prefix}_{slurm_index}.txt', 'w') as f_out:
-        f_out.write(str(fid))
+    return compute_classical_fidelity(ideal_counts, normed_noisy_counts)
 
 
 def evaluate_single_input_teledata(args):

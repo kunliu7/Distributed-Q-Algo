@@ -27,15 +27,16 @@ def main():
         eval_func = eval_CSWAP_telegate_single_thread
 
     time_start = time.time()
-    eval_func(
+    fid = eval_func(
         args.n_trgts,
         p2=args.p2,
         circs_per_input=args.iters_per_input,
-        shots_per_circ=args.n_shots,
-        slurm_index=args.slurm_index,
-        output_file_prefix=args.output_file_prefix)
-
+        shots_per_circ=args.n_shots)
     time_end = time.time()
+
+    with open(f'{args.output_file_prefix}_{args.slurm_index}.txt', 'w') as f_out:
+        f_out.write(str(fid))
+
     print(f"Time taken: {time_end - time_start} seconds")
 
 
