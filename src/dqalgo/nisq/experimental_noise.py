@@ -4,6 +4,8 @@ from dqalgo.data_mgr import (
     NISQTeleportedCNOTsDataMgr
 )
 
+MAX_ERRORS = 999
+
 """
 Retrieve experimenatlly determined noise model for the various circuits
 
@@ -33,7 +35,7 @@ def get_fanout_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
     n_trgts_idx = n_trgts_lst.index(n_trgts)
     p2_idx = p2s.index(p2)
     error_counts = error_counts_lst[n_trgts_idx * len(p2s) + p2_idx]
-    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:MAX_ERRORS]
     errors_tuple = [(error[1:].replace('_', 'I'), count/100000) for error, count in top_errors]
 
     return errors_tuple
@@ -56,7 +58,7 @@ def get_teledata_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]
     n_trgts_idx = n_trgts_lst.index(n_trgts)
     p2_idx = p2s.index(p2)
     error_counts = error_counts_lst[n_trgts_idx * len(p2s) + p2_idx]
-    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:MAX_ERRORS]
     errors_tuple = [(error[1:].replace('_', 'I'), count/100000) for error, count in top_errors]
 
     return errors_tuple
@@ -82,7 +84,7 @@ def get_pre_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, 
     n_trgts_idx = n_trgts_lst.index(n_trgts)
     p2_idx = p2s.index(p2)
     error_counts = error_counts_lst[n_trgts_idx * len(p2s) + p2_idx]
-    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:MAX_ERRORS]
     errors_tuple = [(error[1:].replace('_', 'I'), count/100000) for error, count in top_errors]
 
     return errors_tuple
@@ -108,7 +110,7 @@ def get_telecnot_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]
     n_trgts_idx = n_trgts_lst.index(n_trgts)
     p2_idx = p2s.index(p2)
     error_counts = error_counts_lst[n_trgts_idx * len(p2s) + p2_idx]
-    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    top_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:MAX_ERRORS]
     errors_tuple = [(error[1:].replace('_', 'I'), count/100000) for error, count in top_errors]
 
     return errors_tuple
