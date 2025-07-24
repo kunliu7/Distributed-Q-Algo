@@ -1,0 +1,24 @@
+#!/bin/bash
+#SBATCH --job-name=eval_nisq_cswap
+#SBATCH --output=logs/eval_nisq_cswap_%j.out
+#SBATCH --error=logs/eval_nisq_cswap_%j.err
+#SBATCH --time=02:00:00
+#SBATCH --partition=standard
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --array=0-149
+#SBATCH --mem=8G
+
+# Load necessary modules (if applicable)
+# module load python/3.12
+
+# Activate your conda environment
+source ~/miniconda3/etc/profile.d/conda.sh
+conda activate my_env
+
+# Navigate to your project directory
+cd /your/project/directory
+
+# Execute the Python script with arguments
+python ./scripts/eval_nisq_cswap_parallel.py --n_trgts 4 --p2 0.001 --method telegate --output_file_prefix './data/nisq/cswap/example_outputs_folder' --slurm_index $SLURM_ARRAY_TASK_ID

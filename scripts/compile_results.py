@@ -31,7 +31,7 @@ def main():
 
     mean = np.mean(fids)
     std = np.std(fids)
-    print(mean, std)
+    print(f"Mean fidelity:\n{mean}\n Standard deviation:\n{std}")
 
 if __name__ == "__main__":
     main()
