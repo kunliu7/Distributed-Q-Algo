@@ -3,7 +3,6 @@
 #SBATCH --output=logs/eval_nisq_cswap_%j.out
 #SBATCH --error=logs/eval_nisq_cswap_%j.err
 #SBATCH --time=02:00:00
-#SBATCH --partition=standard
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
