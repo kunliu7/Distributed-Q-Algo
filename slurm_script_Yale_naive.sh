@@ -13,4 +13,4 @@
 module load miniconda
 conda activate dqalgo
 
-python scripts/eval_nisq_cswap_parallel.py --n_trgts 4 --p2 0.001 --method telegate --output_file_prefix './data/nisq/cswap/test' --slurm_index ${SLURM_ARRAY_TASK_ID}
+python scripts/eval_nisq_cswap_parallel.py --n_trgts 4 --p2 0.001 --method telegate --slurm_index ${SLURM_ARRAY_TASK_ID}
