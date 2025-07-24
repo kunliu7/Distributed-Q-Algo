@@ -21,10 +21,7 @@ def main():
 
     args = parser.parse_args()
     my_slurm_index = os.getenv('SLURM_ARRAY_TASK_ID')
-    if my_slurm_index is None:
-        my_slurm_index = args.slurm_index
-    else:
-        assert int(my_slurm_index) == args.slurm_index
+    assert my_slurm_index is not None, "SLURM_ARRAY_TASK_ID is not set"
 
     print(args)
     output_dir = f'./data/nisq/cswap/{args.method}-t={args.n_trgts}-p={args.p2}'
