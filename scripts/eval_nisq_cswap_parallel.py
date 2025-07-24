@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--n_shots", type=int, default=1024)
     parser.add_argument("--iters_per_input", type=int, default=1)
     parser.add_argument("--method", type=str, default="telegate", choices=["teledata", "telegate"])
-    parser.add_argument("--slurm_index", type=int)
+    # parser.add_argument("--slurm_index", type=int)
 
     # parser.add_argument("--output_file_prefix", type=str)
 
