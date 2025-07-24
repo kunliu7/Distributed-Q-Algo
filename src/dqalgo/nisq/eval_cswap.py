@@ -27,8 +27,6 @@ def eval_CSWAP_teledata_single_thread(
         p2: float,
         circs_per_input: int,
         shots_per_circ: int,
-        slurm_index: int,
-        output_file_prefix: str
     ):
     n_data_qubits = 2*n_trgts + 1
 
