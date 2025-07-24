@@ -13,4 +13,7 @@
 module load miniconda
 conda activate dqalgo
 
+echo "SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID}"
+echo "Extra arguments:" "$@"
+
 python scripts/eval_nisq_cswap_parallel.py --slurm_index ${SLURM_ARRAY_TASK_ID} "$@"
