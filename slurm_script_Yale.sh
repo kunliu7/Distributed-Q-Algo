@@ -20,4 +20,4 @@ method=$(echo "$3" | tr -d '[:space:]')
 echo "SLURM_ARRAY_TASK_ID=${SLURM_ARRAY_TASK_ID}"
 echo "Extra arguments:" "$@"
 
-python scripts/eval_nisq_cswap_parallel.py --n_trgts "$n_trgts" --p2 "$p2" --method "$method" --slurm_index ${SLURM_ARRAY_TASK_ID}
+python scripts/eval_nisq_cswap_parallel.py --n_trgts "$n_trgts" --p2 "$p2" --method "$method"
