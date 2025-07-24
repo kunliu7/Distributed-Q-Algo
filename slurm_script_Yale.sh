@@ -7,7 +7,6 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --array=0-149
-#SBATCH --mem=8G
 #SBATCH --mail-type=ALL
 
 
