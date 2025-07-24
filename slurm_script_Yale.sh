@@ -13,4 +13,4 @@
 module load miniconda
 conda activate dqalgo
 
-python scripts/eval_nisq_cswap_parallel.py "$@" --slurm_index ${SLURM_ARRAY_TASK_ID}
+python scripts/eval_nisq_cswap_parallel.py --slurm_index ${SLURM_ARRAY_TASK_ID} "$@"
