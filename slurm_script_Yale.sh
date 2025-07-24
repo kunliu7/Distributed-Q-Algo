@@ -12,6 +12,6 @@
 
 
 module load miniconda
-conda activate qlop
+conda activate dqalgo
 
 python scripts/eval_nisq_cswap_parallel.py "$@"
