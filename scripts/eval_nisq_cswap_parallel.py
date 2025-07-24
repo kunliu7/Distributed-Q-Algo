@@ -16,9 +16,16 @@ def main():
     parser.add_argument("--iters_per_input", type=int, default=1)
     parser.add_argument("--method", type=str, default="telegate", choices=["teledata", "telegate"])
     parser.add_argument("--slurm_index", type=int)
+
     # parser.add_argument("--output_file_prefix", type=str)
 
     args = parser.parse_args()
+    my_slurm_index = os.getenv('SLURM_ARRAY_TASK_ID')
+    if my_slurm_index is None:
+        my_slurm_index = args.slurm_index
+    else:
+        assert int(my_slurm_index) == args.slurm_index
+
     print(args)
     output_dir = f'./data/nisq/cswap/{args.method}-t={args.n_trgts}-p={args.p2}'
     if not os.path.exists(output_dir):
@@ -38,7 +45,7 @@ def main():
         shots_per_circ=args.n_shots)
     time_end = time.time()
 
-    with open(f'{output_dir}/{args.slurm_index}.txt', 'w') as f_out:
+    with open(f'{output_dir}/{my_slurm_index}.txt', 'w') as f_out:
         f_out.write(str(fid))
 
     print(f"Time taken: {time_end - time_start} seconds")
