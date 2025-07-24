@@ -1,10 +1,8 @@
 import argparse
 import time
 
-from dqalgo.nisq.eval_cswap import (
-    eval_CSWAP_teledata_single_thread,
-    eval_CSWAP_telegate_single_thread
-)
+from dqalgo.nisq.eval_cswap import (eval_CSWAP_teledata_single_thread,
+                                    eval_CSWAP_telegate_single_thread)
 
 """
 A single job to be executed by HPC
@@ -20,6 +18,7 @@ def main():
     parser.add_argument("--output_file_prefix", type=str)
 
     args = parser.parse_args()
+    print(args)
     if args.method == "teledata":
         print("Using teledata method")
         eval_func = eval_CSWAP_teledata_single_thread
