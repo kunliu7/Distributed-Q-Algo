@@ -185,15 +185,19 @@ and modify the arguments as desired.
 
 Run the following line from the root directory of the respository:
 
-```sbatch ./your_slurm_scrupt```
+```sbatch ./your_slurm_script```
 
 This will create 150 jobs, each sampling a single random input bitstring. Each job will create an output file in the specified output directory. On occasion, some jobs may fail due to memory constraints. In that case, you can run more jobs (be sure that the filenames don't overlap) until there are at least 150.
 
-4. Compiling the data
+4. Compiling and plotting the data
 
-We also provide a script which computes and prints the mean and standard deviation of the results files, which can be run via the following command:
+We also provide a script which compiles the results and replaces it with a csv file:
 
-```python ./scripts/compile_results.py --output_folder ./your/output/folder```
+```python ./scripts/compile_results.py --data_dir /path/to/data```
+
+If you would like to plot the data, you can run the plotting script as well, which will output a pdf in the `/data/nisq/cswap_graph` folder:
+
+```python ./scripts/generate_graph.py --data_dir /path/to/data --method teledata```
 
 
 
