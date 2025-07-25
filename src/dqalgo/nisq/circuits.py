@@ -158,9 +158,16 @@ def apply_parallel_toffoli_via_fanout(
         add_custom_error_injection(qc, ctrl1_regs + targ_regs, n_fanout_errors)
 
     qc.t(ctrl2_regs + targ_regs)
-    qc.append(two_n_fanout, qubits)
-    if two_n_fanout_errors is not None:
-        add_custom_error_injection(qc, qubits, two_n_fanout_errors)
+    # qc.append(two_n_fanout, qubits)
+    # if two_n_fanout_errors is not None:
+    #     add_custom_error_injection(qc, qubits, two_n_fanout_errors)
+    qc.append(n_fanout, ctrl1_regs + ctrl2_regs)
+    if n_fanout_errors is not None:
+        add_custom_error_injection(qc, ctrl1_regs + ctrl2_regs, n_fanout_errors)
+    
+    qc.append(n_fanout, ctrl1_regs + targ_regs)
+    if n_fanout_errors is not None:
+        add_custom_error_injection(qc, ctrl1_regs + targ_regs, n_fanout_errors)
 
     qc.tdg(ctrl2_regs)
     qc.cx(targ_regs, ctrl2_regs)

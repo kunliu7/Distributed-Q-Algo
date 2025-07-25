@@ -80,14 +80,19 @@ def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[Quantum
                 elif pauli_str[i] == "Z":
                     qc.z(qubit_index)
 
-def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
-    for pauli_str, prob in error_probs:
-        fanout_error = pauli_error([
-            (pauli_str, prob),
-            ("I" * len(pauli_str), 1 - prob)
-        ]).to_instruction()
-        qc.append(fanout_error, qubit_indices)
+# def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
+#     for pauli_str, prob in error_probs:
+#         fanout_error = pauli_error([
+#             (pauli_str, prob),
+#             ("I" * len(pauli_str), 1 - prob)
+#         ]).to_instruction()
+#         qc.append(fanout_error, qubit_indices)
 
+
+def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: list[tuple[str, float]]) -> None:
+    total_error_prob = sum(prob for _, prob in error_probs)
+    fanout_error = pauli_error(error_probs + [("I" * len(error_probs[0][0]), 1 - total_error_prob)]).to_instruction()
+    qc.append(fanout_error, qubit_indices)
 
 
 def reduce_stabilizers(stabs: list[stim.PauliString], keep_ids: list[int]) -> list[stim.PauliString]:
