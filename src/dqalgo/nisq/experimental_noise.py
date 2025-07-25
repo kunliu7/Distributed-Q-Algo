@@ -1,7 +1,7 @@
 from dqalgo.data_mgr import (NISQFanoutDataMgr, NISQTeledataDataMgr,
                              NISQTeleportedCNOTsDataMgr)
 
-MAX_ERRORS = 50
+MAX_ERRORS = 999
 
 """
 Retrieve experimenatlly determined noise model for the various circuits
