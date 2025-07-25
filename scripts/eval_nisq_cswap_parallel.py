@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--slurm_index", type=int)
 
     args = parser.parse_args()
-    output_dir = f'./data/nisq/cswap/{args.method}-t={args.n_trgts}-p={args.p2}'
+    output_dir = f'./data/nisq/cswap/{args.method}/{args.method}-t={args.n_trgts}-p={args.p2}'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     
