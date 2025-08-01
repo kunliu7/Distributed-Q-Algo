@@ -45,6 +45,64 @@ def apply_GHZ_prep_circ_w_reset(
         for i in range(n):
             circ.measure(qr[i], anc_cr[i])
 
+
+def get_distributed_GHZ_prep_circ(n_parties: int, meas_all: bool = False,):
+    qubits = QuantumRegister(n_parties, 'data') #[QuantumRegister(1, f't{i}') for i in range(n_parties)]
+    bell_pair_ancilla_regs = QuantumRegister(n_parties, 'bell')#[QuantumRegister(1, f'a{i}') for i in range(n_parties)]
+    bell_pair_ancilla_cregs = ClassicalRegister(n_parties, 'c_bell')#[ClassicalRegister(1, f'bell_cregs{i}') for i in range(n_parties)]
+    ancilla_cregs =  ClassicalRegister(n_parties, 'c_anc')#[ClassicalRegister(1, f'anc_cregs{i}') for i in range(n_parties)]
+
+    qc = QuantumCircuit(qubits, bell_pair_ancilla_regs, bell_pair_ancilla_cregs, ancilla_cregs)
+
+    qr = qc.qubits[:n_parties]
+    bell_regs = qc.qubits[n_parties:n_parties*2]
+    bell_cregs = qc.clbits[:n_parties]
+    anc_cr = qc.clbits[n_parties:n_parties*2]
+
+    half_n = n_parties // 2
+
+    for m in range(half_n):
+        qc.h(qr[2 * m])
+
+    apply_teleported_cnot(qc, qr[::2], qr[1::2], bell_regs[::2], bell_regs[1::2], bell_cregs[::2], bell_cregs[1::2])
+
+    # Reset bell pairs for the next round
+    qc.reset(bell_regs[1:-1])
+    qc.h(bell_regs[1:-1:2])
+    qc.cx(bell_regs[1:-1:2], bell_regs[2::2])
+
+    apply_teleported_cnot(qc, qr[1:-1:2], qr[2::2], bell_regs[1:-1:2], bell_regs[2::2], bell_cregs[1:-1:2], bell_cregs[2::2])
+
+    for m in range(half_n - 1):
+        qc.measure(qr[2 * m + 2], anc_cr[2 * m + 2])
+
+    for m in range(half_n - 1):
+        measured_idx = 2 * m + 2
+        _condition = expr.lift(anc_cr[measured_idx]) if m == 0 else expr.bit_xor(_condition, anc_cr[measured_idx])
+        with qc.if_test(expr.equal(_condition, True)):  # type: ignore
+            qc.x(qr[2 * m + 3])
+
+    qc.barrier()
+
+    qc.reset(qr[2::2])
+
+    # Reset bell pairs for the next round
+    qc.reset(bell_regs[1:-1])
+    qc.h(bell_regs[1:-1:2])
+    qc.cx(bell_regs[1:-1:2], bell_regs[2::2])
+
+    apply_teleported_cnot(qc, qr[1:-1:2], qr[2::2], bell_regs[1:-1:2], bell_regs[2::2], bell_cregs[1:-1:2], bell_cregs[2::2])
+
+    qc.barrier()
+
+    if meas_all:
+        for i in range(n_parties):
+            qc.measure(qr[i], anc_cr[i])
+
+    return qc
+
+
+
 def get_Fanout_circ_by_GHZ_w_reset(n_tgts: int, init_bitstr: str | None = None, meas_all: bool = False) -> QuantumCircuit:
     """Ref: http://arxiv.org/abs/2403.18768, Fig. 3(a)"""
     # c, a1, t1, a2, t2, ...
@@ -121,7 +179,7 @@ def apply_parallel_toffoli_via_fanout(
         two_n_fanout_errors: tuple[str, float] | None = None,
     ) -> QuantumCircuit:
     """
-    Red circuit from Fig. 5(e) of Distributed Quantum Signal Processing
+    Red circuit from Fig. 5(e) of QRACD
     """
     n_trgts = len(targ_regs)
 
@@ -164,7 +222,7 @@ def apply_parallel_toffoli_via_fanout(
     qc.append(n_fanout, ctrl1_regs + ctrl2_regs)
     if n_fanout_errors is not None:
         add_custom_error_injection(qc, ctrl1_regs + ctrl2_regs, n_fanout_errors)
-    
+
     qc.append(n_fanout, ctrl1_regs + targ_regs)
     if n_fanout_errors is not None:
         add_custom_error_injection(qc, ctrl1_regs + targ_regs, n_fanout_errors)
@@ -231,7 +289,7 @@ def apply_teleported_toffoli(
         two_n_fanout_errors: tuple[str, float] | None = None
     ) -> None:
         """
-        Orange circuit from Fig. 5(d) of Distributed Quantum Signal Processing.
+        Orange circuit from Fig. 5(d) of QRACD.
         Control 1 and target are shared by part A, Control 2 is located on party B.
 
         ctrl1_reg: |phi> in the diagram (located in QPU controlled by party A)
@@ -331,7 +389,7 @@ def apply_teleported_cnot(
         party_B_bell_cregs: list[ClassicalRegister]
     ) -> None:
     """
-    Teleported CNOT circuit from Fig. 1(b) of Distributed Quantum Signal Processing. Applies
+    Teleported CNOT circuit from Fig. 1(b) of QRACD. Applies
     a CNOT gate from ctrl_regs to targ_regs, measuring party_A_bell_regs and party_B_bell_regs.
 
     ctrl_regs: |phi> in the diagram (located in QPU controlled by party A)
@@ -365,7 +423,7 @@ def apply_state_teleportation(
         party_A_bell_cregs: list[ClassicalRegister]
     ) -> None:
     """
-    State teleportation circuit from Fig. 1(b) of Distributed Quantum Signal Processing. Teleport
+    State teleportation circuit from Fig. 1(b) of QRACD. Teleport
     state_to_teleport to target_ancillas, measuring state_to_teleport and party_A_bell_regs.
 
     state_to_teleport: |psi> in the diagram (located in QPU controlled by party A)
@@ -407,7 +465,7 @@ def apply_CSWAP_teledata(
         two_n_fanout_errors: tuple[str, float] | None = None
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(c) of Distributed Quantum Signal Processing. Applies
+        CSWAP circuit from Fig. 5(c) of QRACD. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 
@@ -535,7 +593,7 @@ def apply_CSWAP_telegate(
         two_n_fanout_errors: tuple[str, float] | None = None
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(b) of Distributed Quantum Signal Processing. Applies
+        CSWAP circuit from Fig. 5(b) of QRACD. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 
@@ -659,7 +717,7 @@ def apply_teleported_toffoli_fewer_ancillas(
         pre_teletoffoli_errors: tuple[str, float] | None = None,
     ) -> None:
         """
-        Orange circuit from Fig. 5(d) of Distributed Quantum Signal Processing
+        Orange circuit from Fig. 5(d) of QRACD
 
         ctrl1_reg: |phi> in the diagram (located in QPU controlled by party A)
         ctrl2_regs: rho_j in the diagram (located in QPU controlled by party A)
@@ -697,7 +755,7 @@ def apply_CSWAP_teledata_fewer_ancillas(
         teledata_errors: tuple[str, float] | None = None
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(c) of Distributed Quantum Signal Processing. Applies
+        CSWAP circuit from Fig. 5(c) of QRACD. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs. In this implementation, we skip the teleportations
         and inject noise into the circuit based on other experiments
@@ -778,7 +836,7 @@ def apply_CSWAP_telegate_fewer_ancillas(
         pre_teletoffoli_errors: tuple[str, float] | None = None,
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(b) of Distributed Quantum Signal Processing. Applies
+        CSWAP circuit from Fig. 5(b) of QRACD. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 

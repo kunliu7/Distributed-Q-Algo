@@ -13,6 +13,7 @@ from .circuits import (
     get_CSWAP_teledata_fewer_ancillas_circ,
     get_CSWAP_telegate_fewer_ancillas_circ,
     get_Fanout_circ_by_GHZ_w_reset,
+    get_distributed_GHZ_prep_circ
 )
 
 from .fanouts import BaumerFanoutBuilder
@@ -182,3 +183,27 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
     stddev_fid = np.std(fids)
 
     return mean_fid, stddev_fid
+
+
+def eval_GHZ_prep(n_parties: int, p_err: float, n_shots: int) -> float:
+
+    noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
+    sim = AerSimulator(noise_model=noise_model)
+
+    print('Constructing circuits')
+
+    ideal_counts = {'0'*n_parties: 0.5, '1'*n_parties: 0.5}
+
+    qc = get_distributed_GHZ_prep_circ(
+        n_parties=n_parties,
+        meas_all=True,
+    )
+
+    results = sim.run(qc, shots=n_shots).result()
+    counts = results.get_counts()
+    reg_counts = get_counts_of_first_n_regs(counts, n_parties)
+
+    normed_noisy_counts = normalize_counts(reg_counts)
+    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+
+    return fid

@@ -73,6 +73,10 @@ class NISQCswapDataMgr(BaseDataMgr):
     data_dir = "data/nisq/cswap"
     file_type = "csv"
 
+class NISQPrepareGHZDataMgr(BaseDataMgr):
+    data_dir = "data/nisq/ghz"
+    file_type = "csv"
+
 class NISQTeledataDataMgr(BaseDataMgr):
     data_dir = "data/nisq/teleport"
     file_type = "pkl"
