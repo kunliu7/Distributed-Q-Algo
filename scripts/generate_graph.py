@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--method", type=str, default='teledata', choices=['teledata', 'telegate'])
     parser.add_argument("--data_dir", type=str, default='./data/nisq/cswap/teledata/collected.csv')
-    parser.add_argument("--min_trgts", type=int, default=2)
+    parser.add_argument("--min_trgts", type=int, default=1)
     parser.add_argument("--max_trgts", type=int, default=6)
 
     args = parser.parse_args()
