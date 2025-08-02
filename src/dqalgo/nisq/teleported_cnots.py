@@ -43,6 +43,7 @@ class TeleportedCnotCircBuilder:
             self.apply_2q_gate_error(self.sim, q_bell_targ, q_targ)
 
             self.sim.h(q_bell_targ)
+            self.apply_1q_gate_error(self.sim, q_bell_targ)
 
             self.apply_measurement_error(self.sim, q_bell_ctrl)
             m_bell_ctrl = self.sim.measure(q_bell_ctrl)
@@ -84,13 +85,13 @@ def eval_teleported_CNOT_circ(n: int, p1: float, p2: float, pm: float, n_shots: 
         noisy_sim = builder.sim
         noisy_inv_tableau = noisy_sim.current_inverse_tableau()
         pauli_error = (ideal_inv_tableau.inverse() * noisy_inv_tableau).to_pauli_string()
-        remaining_pauli_error = pauli_error[2*n:3*n]
+        remaining_pauli_error = pauli_error[:n] + pauli_error[-n:]
 
-        if remaining_pauli_error != stim.PauliString("I"*n):
+        if remaining_pauli_error != stim.PauliString("I"*(2*n)):
             key = str(remaining_pauli_error)
             error_counts[key] = error_counts.get(key, 0) + 1
         else:
-            assert remaining_pauli_error == stim.PauliString("I"*n)
+            assert remaining_pauli_error == stim.PauliString("I"*(2*n))
 
     return error_counts
 

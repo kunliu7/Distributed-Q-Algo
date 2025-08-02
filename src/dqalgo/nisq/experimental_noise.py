@@ -1,4 +1,6 @@
-from dqalgo.data_mgr import (NISQFanoutDataMgr, NISQTeledataDataMgr,
+from dqalgo.data_mgr import (NISQFanoutDataMgr,
+                             NISQTeledataDataMgr,
+                             NISQTelegateDataMgr,
                              NISQTeleportedCNOTsDataMgr)
 
 MAX_ERRORS = 999
@@ -39,7 +41,7 @@ def get_fanout_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
 
 def get_teledata_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]:
     """Get the experimentally determined error probabilities for teleporting the qubits."""
-    n_trgts_lst = [1,2,3,4,5,6]
+    n_trgts_lst = [1,2,3,4,5,6,7,8]
     p2s = [0.001, 0.003, 0.005]
     n_shots = 100000
 
@@ -74,7 +76,7 @@ def get_pre_teletoffoli_error_probs(n_trgts: int, p2: float) -> list[tuple[str, 
     if p2 not in p2s:
         raise ValueError(f"p2 must be one of {p2s}")
 
-    dmgr = NISQTeledataDataMgr()
+    dmgr = NISQTelegateDataMgr()
     data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
     error_counts_lst, _, _ = data
 
@@ -91,7 +93,7 @@ def get_telecnot_error_probs(n_trgts: int, p2: float) -> list[tuple[str, float]]
     """
     Get the experimentally determined error probabilities for teleporting the CNOT gate.
     """
-    n_trgts_lst = [1,2,3,4,5,6]
+    n_trgts_lst = [1,2,3,4,5,6,7,8]
     p2s = [0.001, 0.003, 0.005]
     n_shots = 100000
 

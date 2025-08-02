@@ -68,11 +68,11 @@ def get_truth_table_tomography(
             two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
         if 'teledata' in error_types:
-            teledata_errors = get_teledata_error_probs(n_trgts=n_trgts, p2=10*p_err)
+            teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
 
         if 'telegate' in error_types:
             pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=n_trgts, p2=10*p_err)
-            telecnot_errors = get_telecnot_error_probs(n_trgts=n_trgts, p2=10*p_err)
+            telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
 
         fids = []
         noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)

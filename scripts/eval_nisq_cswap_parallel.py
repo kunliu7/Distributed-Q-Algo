@@ -10,7 +10,7 @@ A single job to be executed by HPC
 """
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_trgts", "-t", type=int, default=4)
+    parser.add_argument("--n_trgts", "-t", type=int, default=3)
     parser.add_argument("--p2", type=float, default=0.001)
     parser.add_argument("--n_shots", type=int, default=1024)
     parser.add_argument("--iters_per_input", type=int, default=1)
@@ -21,7 +21,7 @@ def main():
     output_dir = f'./data/nisq/cswap/{args.method}/{args.method}-t={args.n_trgts}-p={args.p2}'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+
     if args.method == "teledata":
         print("Using teledata method")
         eval_func = eval_CSWAP_teledata_single_thread

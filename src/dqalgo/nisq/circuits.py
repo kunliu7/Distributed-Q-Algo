@@ -9,7 +9,9 @@ def apply_GHZ_prep_circ_w_reset(
         circ: QuantumCircuit,
         qr: list[QuantumRegister],
         anc_cr: list[ClassicalRegister],
-        n: int, meas_all: bool = False):
+        n: int,
+        meas_all: bool = False,
+        telecnot_errors: tuple[str, float] | None = None):
     """Ref: http://arxiv.org/abs/2206.15405, Fig. 1
     """
     assert n % 2 == 0
@@ -20,9 +22,15 @@ def apply_GHZ_prep_circ_w_reset(
 
     for m in range(half_n):
         circ.cx(qr[2 * m], qr[2 * m + 1])
+        if telecnot_errors is not None:
+            add_custom_error_injection(circ, [qr[2 * m], qr[2 * m + 1]], telecnot_errors)
+
 
     for m in range(half_n - 1):
         circ.cx(qr[2 * m + 1], qr[2 * m + 2])
+        if telecnot_errors is not None:
+            add_custom_error_injection(circ, [qr[2 * m + 1], qr[2 * m + 2]], telecnot_errors)
+
 
     for m in range(half_n - 1):
         circ.measure(qr[2 * m + 2], anc_cr[2 * m + 2])
@@ -38,6 +46,8 @@ def apply_GHZ_prep_circ_w_reset(
     for i in range(half_n - 1):
         circ.reset(qr[2 * i + 2])
         circ.cx(qr[2 * i + 1], qr[2 * i + 2])
+        if telecnot_errors is not None:
+            add_custom_error_injection(circ, [qr[2 * i + 1], qr[2 * i + 2]], telecnot_errors)
 
     circ.barrier()
 
@@ -46,58 +56,27 @@ def apply_GHZ_prep_circ_w_reset(
             circ.measure(qr[i], anc_cr[i])
 
 
-def get_distributed_GHZ_prep_circ(n_parties: int, meas_all: bool = False,):
-    qubits = QuantumRegister(n_parties, 'data') #[QuantumRegister(1, f't{i}') for i in range(n_parties)]
-    bell_pair_ancilla_regs = QuantumRegister(n_parties, 'bell')#[QuantumRegister(1, f'a{i}') for i in range(n_parties)]
-    bell_pair_ancilla_cregs = ClassicalRegister(n_parties, 'c_bell')#[ClassicalRegister(1, f'bell_cregs{i}') for i in range(n_parties)]
-    ancilla_cregs =  ClassicalRegister(n_parties, 'c_anc')#[ClassicalRegister(1, f'anc_cregs{i}') for i in range(n_parties)]
+def get_ideal_GHZ_prep_circ(n_parties: int) -> QuantumCircuit:
+    circ = QuantumCircuit(n_parties)
 
-    qc = QuantumCircuit(qubits, bell_pair_ancilla_regs, bell_pair_ancilla_cregs, ancilla_cregs)
+    circ.h(0)
+    for i in range(n_parties - 1):
+        circ.cx(i, i + 1)
 
-    qr = qc.qubits[:n_parties]
-    bell_regs = qc.qubits[n_parties:n_parties*2]
-    bell_cregs = qc.clbits[:n_parties]
-    anc_cr = qc.clbits[n_parties:n_parties*2]
+    return circ
 
-    half_n = n_parties // 2
+def get_distributed_GHZ_prep_circ(
+        n_parties: int,
+        meas_all: bool = False,
+        telecnot_errors: tuple[str, float] | None = None
+    ) -> QuantumCircuit:
 
-    for m in range(half_n):
-        qc.h(qr[2 * m])
+    qubits = [QuantumRegister(1, f't{i}') for i in range(n_parties)]
+    ancilla_cregs =  [ClassicalRegister(1, f'anc_cregs{i}') for i in range(n_parties)]
 
-    apply_teleported_cnot(qc, qr[::2], qr[1::2], bell_regs[::2], bell_regs[1::2], bell_cregs[::2], bell_cregs[1::2])
+    qc = QuantumCircuit(*qubits, *ancilla_cregs)
 
-    # Reset bell pairs for the next round
-    qc.reset(bell_regs[1:-1])
-    qc.h(bell_regs[1:-1:2])
-    qc.cx(bell_regs[1:-1:2], bell_regs[2::2])
-
-    apply_teleported_cnot(qc, qr[1:-1:2], qr[2::2], bell_regs[1:-1:2], bell_regs[2::2], bell_cregs[1:-1:2], bell_cregs[2::2])
-
-    for m in range(half_n - 1):
-        qc.measure(qr[2 * m + 2], anc_cr[2 * m + 2])
-
-    for m in range(half_n - 1):
-        measured_idx = 2 * m + 2
-        _condition = expr.lift(anc_cr[measured_idx]) if m == 0 else expr.bit_xor(_condition, anc_cr[measured_idx])
-        with qc.if_test(expr.equal(_condition, True)):  # type: ignore
-            qc.x(qr[2 * m + 3])
-
-    qc.barrier()
-
-    qc.reset(qr[2::2])
-
-    # Reset bell pairs for the next round
-    qc.reset(bell_regs[1:-1])
-    qc.h(bell_regs[1:-1:2])
-    qc.cx(bell_regs[1:-1:2], bell_regs[2::2])
-
-    apply_teleported_cnot(qc, qr[1:-1:2], qr[2::2], bell_regs[1:-1:2], bell_regs[2::2], bell_cregs[1:-1:2], bell_cregs[2::2])
-
-    qc.barrier()
-
-    if meas_all:
-        for i in range(n_parties):
-            qc.measure(qr[i], anc_cr[i])
+    apply_GHZ_prep_circ_w_reset(qc, qubits, ancilla_cregs, n_parties, meas_all=meas_all, telecnot_errors=telecnot_errors)
 
     return qc
 
@@ -727,7 +706,8 @@ def apply_teleported_toffoli_fewer_ancillas(
         qc.cx(ctrl2_regs, party_A_anc_regs)
 
         if pre_teletoffoli_errors is not None:
-            add_custom_error_injection(qc, party_A_anc_regs + ctrl2_regs, pre_teletoffoli_errors)
+            for i in range(len(ctrl2_regs)):
+                add_custom_error_injection(qc, [party_A_anc_regs[i], ctrl2_regs[i]], pre_teletoffoli_errors)
 
         apply_parallel_toffoli_via_fanout(
             qc=qc,
@@ -765,7 +745,8 @@ def apply_CSWAP_teledata_fewer_ancillas(
         state_B: rho_j in the diagram (located in QPU controlled by party B)
         """
         if teledata_errors is not None:
-            add_custom_error_injection(qc, state_B, teledata_errors)
+            for qubit in state_B:
+                add_custom_error_injection(qc, [qubit], teledata_errors)
 
         qc.cx(state_B, state_A)
         apply_parallel_toffoli_via_fanout(
@@ -779,7 +760,8 @@ def apply_CSWAP_teledata_fewer_ancillas(
         qc.cx(state_B, state_A)
 
         if teledata_errors is not None:
-            add_custom_error_injection(qc, state_B, teledata_errors)
+            for qubit in state_B:
+                add_custom_error_injection(qc, [qubit], teledata_errors)
 
 def get_CSWAP_teledata_fewer_ancillas_circ(
         input_bitstr: str | None = None,
@@ -847,8 +829,10 @@ def apply_CSWAP_telegate_fewer_ancillas(
         """
 
         qc.cx(state_A, state_B)
+
         if telecnot_errors is not None:
-            add_custom_error_injection(qc, state_A + state_B, telecnot_errors)
+            for i in range(len(state_B)):
+                add_custom_error_injection(qc, [state_A[i], state_B[i]], telecnot_errors)
 
         # note: A and B are swapped because state_A is the target
         apply_teleported_toffoli_fewer_ancillas(
@@ -865,7 +849,8 @@ def apply_CSWAP_telegate_fewer_ancillas(
 
         qc.cx(state_A, state_B)
         if telecnot_errors is not None:
-            add_custom_error_injection(qc, state_A + state_B, telecnot_errors)
+            for i in range(len(state_B)):
+                add_custom_error_injection(qc, [state_A[i], state_B[i]], telecnot_errors)
 
 def get_CSWAP_telegate_fewer_ancillas_circ(
         input_bitstr: str | None = None,
@@ -897,7 +882,6 @@ def get_CSWAP_telegate_fewer_ancillas_circ(
     for i, val in enumerate(input_bitstr[::-1]):
         if val == '1':
             qc.x(i)
-
 
     apply_CSWAP_telegate_fewer_ancillas(
         qc=qc,

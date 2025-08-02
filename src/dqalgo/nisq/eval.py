@@ -7,13 +7,22 @@ from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 from tqdm import tqdm
 
-from dqalgo.nisq.experimental_noise import get_fanout_error_probs
+from qiskit.quantum_info import state_fidelity
+
+from dqalgo.nisq.experimental_noise import (
+    get_fanout_error_probs,
+    get_telecnot_error_probs,
+    get_pre_teletoffoli_error_probs,
+    get_teledata_error_probs
+)
+
 
 from .circuits import (
     get_CSWAP_teledata_fewer_ancillas_circ,
     get_CSWAP_telegate_fewer_ancillas_circ,
     get_Fanout_circ_by_GHZ_w_reset,
-    get_distributed_GHZ_prep_circ
+    get_distributed_GHZ_prep_circ,
+    get_ideal_GHZ_prep_circ
 )
 
 from .fanouts import BaumerFanoutBuilder
@@ -107,6 +116,7 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
+    teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
 
     fids = []
     noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
@@ -124,7 +134,8 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
-                two_n_fanout_errors=two_n_fanout_errors
+                two_n_fanout_errors=two_n_fanout_errors,
+                teledata_errors=teledata_errors
             )
 
             results = sim.run(qc, shots=shots_per_circ).result()
@@ -150,6 +161,8 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
+    telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
+    pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=10*p_err)
 
     fids = []
     noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
@@ -167,7 +180,9 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
-                two_n_fanout_errors=two_n_fanout_errors
+                two_n_fanout_errors=two_n_fanout_errors,
+                telecnot_errors=telecnot_errors,
+                pre_teletoffoli_errors=pre_teletoffoli_errors
             )
 
             results = sim.run(qc, shots=shots_per_circ).result()
@@ -188,22 +203,24 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
 def eval_GHZ_prep(n_parties: int, p_err: float, n_shots: int) -> float:
 
     noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
-    sim = AerSimulator(noise_model=noise_model)
+    noisy_sim = AerSimulator(noise_model=noise_model, method='density_matrix')
+    telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
 
-    print('Constructing circuits')
+    distributed_circ = get_distributed_GHZ_prep_circ(n_parties=n_parties, telecnot_errors=telecnot_errors)
 
-    ideal_counts = {'0'*n_parties: 0.5, '1'*n_parties: 0.5}
+    distributed_circ.save_density_matrix()
 
-    qc = get_distributed_GHZ_prep_circ(
-        n_parties=n_parties,
-        meas_all=True,
-    )
+    # repeat for ideal circuit
+    noisy_data = noisy_sim.run(distributed_circ).result().data()
+    noisy_rho = noisy_data.get('density_matrix')
 
-    results = sim.run(qc, shots=n_shots).result()
-    counts = results.get_counts()
-    reg_counts = get_counts_of_first_n_regs(counts, n_parties)
+    ideal_sim = AerSimulator(method='density_matrix')
+    ideal_circ = get_ideal_GHZ_prep_circ(n_parties)
+    ideal_circ.save_density_matrix()
 
-    normed_noisy_counts = normalize_counts(reg_counts)
-    fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
+    ideal_data = ideal_sim.run(ideal_circ).result().data()
+    ideal_rho = ideal_data.get('density_matrix')
+
+    fid = state_fidelity(noisy_rho, ideal_rho)
 
     return fid

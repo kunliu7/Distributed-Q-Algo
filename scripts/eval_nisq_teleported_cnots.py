@@ -20,9 +20,8 @@ def main():
         time_start = time.time()
         p1 = p2 / 10
         pm = p2
-        print(f"n_trgts: {n_trgts}, p2: {p2}")
+        print(f"n_trgts: {n_trgts}, p1: {p1}, p2: {p2}, pm: {pm}")
         error_counts = eval_teleported_CNOT_circ(n_trgts, p1, p2, pm, args.n_shots)
-        # print(error_counts)
         error_counts_lst.append(error_counts)
         dmgr.save((error_counts_lst, args.n_trgts, args.p2),
                   n_trgts=args.n_trgts, p2=args.p2, n_shots=args.n_shots)

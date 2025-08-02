@@ -10,7 +10,13 @@ from dqalgo.nisq.circuits import (
     get_CSWAP_telegate_fewer_ancillas_circ
 )
 
-from dqalgo.nisq.experimental_noise import get_fanout_error_probs
+from dqalgo.nisq.experimental_noise import (
+    get_fanout_error_probs,
+    get_teledata_error_probs,
+    get_telecnot_error_probs,
+    get_pre_teletoffoli_error_probs
+)
+
 from dqalgo.nisq.utils import (
     classically_compute_CSWAP,
     get_counts_of_first_n_regs,
@@ -32,6 +38,7 @@ def eval_CSWAP_teledata_single_thread(
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
+    teledata_errors = get_teledata_error_probs(n_trgts=1, p2=p2)
 
     noise_model = get_depolarizing_noise_model(p_1q=p2/10, p_2q=p2, p_meas=p2)
     sim = AerSimulator(noise_model=noise_model)
@@ -50,7 +57,8 @@ def eval_CSWAP_teledata_single_thread(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
+            two_n_fanout_errors=two_n_fanout_errors,
+            teledata_errors=teledata_errors,
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()
@@ -72,6 +80,8 @@ def eval_CSWAP_telegate_single_thread(
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
     two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
+    telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=p2)
+    pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=p2)
 
     noise_model = get_depolarizing_noise_model(p_1q=p2/10, p_2q=p2, p_meas=p2)
     sim = AerSimulator(noise_model=noise_model)
@@ -90,7 +100,9 @@ def eval_CSWAP_telegate_single_thread(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
+            two_n_fanout_errors=two_n_fanout_errors,
+            telecnot_errors=telecnot_errors,
+            pre_teletoffoli_errors=pre_teletoffoli_errors
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()

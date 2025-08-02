@@ -5,11 +5,12 @@ from tqdm import tqdm
 
 
 class TelegateCircBuilder:
+    """Mid-circuit measurement before the Toffoli gate in Fig. 4d of QRACD"""
     def __init__(self, n: int, p1: float = 0.0, p2: float = 0.0, pm: float = 0.0):
         self.n = n
-        self.input_qubits = list(range(n))
-        self.bell_ancillas = list(range(n, 2 * n))
-        self.output_qubits = list(range(2 * n, 3 * n))
+        self.ctrl_bell = list(range(n))
+        self.targ_bell = list(range(n, 2 * n))
+        self.targ_qubits = list(range(2 * n, 3 * n))
         self.sim = stim.TableauSimulator()
         self.measurement_results = []
 
@@ -25,8 +26,8 @@ class TelegateCircBuilder:
 
     def _prepare_bell_pairs(self):
         for i in range(self.n):
-            a = self.bell_ancillas[i]
-            b = self.output_qubits[i]
+            a = self.ctrl_bell[i]
+            b = self.targ_bell[i]
             self.sim.h(a)
             self.apply_1q_gate_error(self.sim, a)
             self.sim.cx(a, b)
@@ -34,19 +35,19 @@ class TelegateCircBuilder:
 
     def _telegate_inputs(self):
         for i in range(self.n):
-            q_in = self.input_qubits[i]
-            q_anc = self.bell_ancillas[i]
-            q_out = self.output_qubits[i]
+            ctrl_bell = self.ctrl_bell[i]
+            targ_bell = self.targ_bell[i]
+            targ = self.targ_qubits[i]
 
-            self.sim.cx(q_in, q_anc)
-            self.apply_2q_gate_error(self.sim, q_in, q_anc)
-            self.apply_measurement_error(self.sim, q_anc)
-            m_anc = self.sim.measure(q_anc)
+            self.sim.cx(targ, targ_bell)
+            self.apply_2q_gate_error(self.sim, targ, targ_bell)
+            self.apply_measurement_error(self.sim, targ_bell)
+            m_anc = self.sim.measure(targ_bell)
             self.measurement_results.append(m_anc)
 
             if m_anc:
-                self.sim.x(q_out)
-                self.apply_1q_gate_error(self.sim, q_out) 
+                self.sim.x(ctrl_bell)
+                self.apply_1q_gate_error(self.sim, ctrl_bell)
 
     def apply_1q_gate_error(self, sim: stim.TableauSimulator, qid: int):
         """Apply a 1-qubit gate error to the qubit at index qid."""
@@ -72,12 +73,12 @@ def eval_telegate_circ(n: int, p1: float, p2: float, pm: float, n_shots: int, ve
         noisy_sim = builder.sim
         noisy_inv_tableau = noisy_sim.current_inverse_tableau()
         pauli_error = (ideal_inv_tableau.inverse() * noisy_inv_tableau).to_pauli_string()
-        remaining_pauli_error = pauli_error[2*n:3*n]
+        remaining_pauli_error = pauli_error[:n] + pauli_error[-n:]
 
-        if remaining_pauli_error != stim.PauliString("I"*n):
+        if remaining_pauli_error != stim.PauliString("I"*(2*n)):
             key = str(remaining_pauli_error)
             error_counts[key] = error_counts.get(key, 0) + 1
         else:
-            assert remaining_pauli_error == stim.PauliString("I"*n)
-    
+            assert remaining_pauli_error == stim.PauliString("I"*(2*n))
+
     return error_counts
