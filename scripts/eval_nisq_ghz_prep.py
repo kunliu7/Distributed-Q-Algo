@@ -11,7 +11,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_parties", "-t", type=int, nargs="+", default=[4])
     parser.add_argument("--p2", type=float, nargs="+", default=[0.001])
-    parser.add_argument("--n_shots", type=int, default=2048)
 
     args = parser.parse_args()
 
@@ -22,7 +21,7 @@ def main():
         p1 = p2 / 10
         pm = p2
         print(f"n_parties: {n_parties}, p1: {p1}, p2: {p2}, pm: {pm}")
-        fid = eval_GHZ_prep(n_parties, p1, args.n_shots)
+        fid = eval_GHZ_prep(n_parties, p1)
         print(fid)
         fid_data.append([n_parties, p2, fid])
 

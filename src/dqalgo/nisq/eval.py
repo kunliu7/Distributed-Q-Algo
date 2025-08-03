@@ -200,7 +200,7 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
     return mean_fid, stddev_fid
 
 
-def eval_GHZ_prep(n_parties: int, p_err: float, n_shots: int) -> float:
+def eval_GHZ_prep(n_parties: int, p_err: float) -> float:
 
     noise_model = get_depolarizing_noise_model(p_1q=p_err, p_2q=p_err*10, p_meas=p_err)
     noisy_sim = AerSimulator(noise_model=noise_model, method='density_matrix')
