@@ -35,8 +35,7 @@ def main():
         # plot the model
         n_fit = np.linspace(min(n_vals), max(n_vals), 100)
         fid_fit = fidelity_model(n_fit, *p_opt)
-        print(p_opt)
-        # only add fit label the first time
+
         if idx == 0:
             plt.plot(n_fit, fid_fit, linestyle='--', label='Linear Fit', c=colors[idx], alpha=0.6)
         else:
@@ -49,7 +48,7 @@ def main():
             )
 
 
-    plt.xlabel(r'Number of Parties ($k$)', fontsize=12)
+    plt.xlabel(r'Number of Parties ($r$)', fontsize=12)
     plt.ylabel('Fidelity', fontsize=12)
     plt.title(f'Fidelity of GHZ State', fontsize=13)
     plt.xticks(df['n_parties'].unique())

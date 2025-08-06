@@ -41,7 +41,6 @@ def main():
         # plot the model
         n_fit = np.linspace(min(n_vals), max(n_vals), 100)
         fid_fit = fidelity_model(n_fit, *p_opt)
-        print(p_opt)
         # only add fit label the first time
         if idx == 0:
             plt.plot(n_fit, fid_fit, linestyle='--', label='Linear Fit', c=colors[idx], alpha=0.6)
@@ -49,7 +48,7 @@ def main():
             plt.plot(n_fit, fid_fit, linestyle='--', c=colors[idx], alpha=0.6)
 
 
-    plt.xlabel(r'Number of Targets ($n$)', fontsize=12)
+    plt.xlabel(r'Target State Size ($n$)', fontsize=12)
     plt.ylabel('Fidelity (Classical)', fontsize=12)
     plt.title(f'Mean Fidelity of Two-Party CSWAP ({args.method.title()} Scheme)', fontsize=13)
     plt.xticks(df['n_trgts'].unique())
