@@ -4,60 +4,64 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 
+k_vals = [8,12]
+min_n = 1
+max_n = 10
+colors = {0.001: '#1f77b4', 0.003: '#2ca02c', 0.005: '#9467bd'}
+line_styles = {8: '--', 12: ':'}
+
 def fidelity_model(n, a, b):
     return a + b*n
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--method", type=str, default='teledata', choices=['teledata', 'telegate'])
-
+    parser.add_argument("--teledata_path", type=str, default='./data/nisq/cswap/teledata/collected.csv')
+    parser.add_argument("--telegate_path", type=str, default='./data/nisq/cswap/telegate/collected.csv')
+    parser.add_argument("--ghz_path", type=str, default='./data/nisq/ghz/collected.csv')
+    parser.add_argument("--save_path", type=str, default='./data/nisq/overall_error_graphs/overall_simulations.pdf')
     args = parser.parse_args()
-    cswap_path = f'./data/nisq/cswap/{args.method}/collected.csv'
-    ghz_path = f'./data/nisq/ghz/collected.csv'
-    save_path = f'./data/nisq/overall_error_graphs/overall_{args.method}_simulations.pdf'
-    cswap_df = pd.read_csv(cswap_path)
-    ghz_df = pd.read_csv(ghz_path)
 
-    colors = {0.001: '#1f77b4', 0.003: '#2ca02c', 0.005: '#9467bd'}
-    line_styles = {8: '--', 12: ':'}
-    plt.figure(figsize=(6,4))
+    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+    paths = [args.teledata_path, args.telegate_path]
+    schemes = ['Teledata', 'Telegate']
+    ghz_df = pd.read_csv(args.ghz_path)
 
-    k_vals = [8,12]
-    min_n = 1
-    max_n = 10
+    for cswap_path, ax, scheme in zip(paths, axs, schemes):
+        cswap_df = pd.read_csv(cswap_path)
 
-    for p2_val in sorted(cswap_df['p2'].unique()):
-        for k in k_vals:
-            subset = cswap_df[cswap_df['p2'] == p2_val]
-            n_vals = subset['n_trgts']
-            fid_vals = subset['mean_fid']
+        for p2_val in sorted(cswap_df['p2'].unique()):
+            for k in k_vals:
+                subset = cswap_df[cswap_df['p2'] == p2_val]
+                n_vals = subset['n_trgts']
+                fid_vals = subset['mean_fid']
 
-            ghz_fid = ghz_df[(ghz_df['n_parties'] == k//2) & (ghz_df['p2'] == p2_val)].iloc[0].fid
+                ghz_fid = ghz_df[(ghz_df['n_parties'] == k//2) & (ghz_df['p2'] == p2_val)].iloc[0].fid
 
-            # fit the model to the data
-            p_opt, _ = curve_fit(fidelity_model, n_vals, fid_vals, p0=[1, 0.05])
-            print(p_opt)
-            # plot the model
-            n_fit = np.linspace(min_n, max_n, 1000)
-            cswap_fid = fidelity_model(n_fit, *p_opt)
+                # fit the model to the data
+                p_opt, _ = curve_fit(fidelity_model, n_vals, fid_vals, p0=[1, 0.05])
+                print(p_opt)
+                # plot the model
+                n_fit = np.linspace(min_n, max_n, 1000)
+                cswap_fid = fidelity_model(n_fit, *p_opt)
 
-            final_fid = ghz_fid * (cswap_fid ** (k - 1))
+                final_fid = ghz_fid * (cswap_fid ** (k - 1))
 
-            if line_styles[k] == '--':
-                plt.plot(n_fit, final_fid, color=colors[p2_val], linestyle=line_styles[k], label=f'$p_{{2q}} = {p2_val}$')
-            else:
-                plt.plot(n_fit, final_fid, color=colors[p2_val], linestyle=line_styles[k])
+                if line_styles[k] == '--':
+                    ax.plot(n_fit, final_fid, color=colors[p2_val], linestyle=line_styles[k], label=f'$p_{{2q}} = {p2_val}$')
+                else:
+                    ax.plot(n_fit, final_fid, color=colors[p2_val], linestyle=line_styles[k])
 
 
-    plt.xlabel(r'Target State Size ($n$)', fontsize=12)
-    plt.ylabel('Fidelity', fontsize=12)
-    plt.title(f'Overall Fidelity Estimate of QRACD ({args.method.title()} Scheme)', fontsize=13)
-    plt.xticks()
-    plt.ylim(0, 1)
-    plt.legend(fontsize=10)
-    plt.grid(alpha=0.3)
+        ax.set_xlabel(r'Target State Size ($n$)', fontsize=12)
+        ax.set_ylabel('Fidelity (Estimate)', fontsize=12)
+        ax.set_title(f'Overall QRACD Fidelity Estimate ({scheme})', fontsize=13)
+        # ax.set_xticks()
+        ax.set_ylim(0, 1)
+        ax.legend(fontsize=10)
+        ax.grid(alpha=0.3)
 
-    plt.savefig(save_path)
+    fig.tight_layout()
+    plt.savefig(args.save_path)
     plt.show()
 
 
