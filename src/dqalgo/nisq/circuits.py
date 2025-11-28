@@ -11,7 +11,7 @@ def apply_GHZ_prep_circ_w_reset(
         anc_cr: list[ClassicalRegister],
         n: int,
         meas_all: bool = False,
-        telecnot_errors: tuple[str, float] | None = None):
+        telecnot_errors: list[tuple[str, float]] | None = None):
     """Ref: http://arxiv.org/abs/2206.15405, Fig. 1
     """
     assert n % 2 == 0
@@ -68,7 +68,8 @@ def get_ideal_GHZ_prep_circ(n_parties: int) -> QuantumCircuit:
 def get_distributed_GHZ_prep_circ(
         n_parties: int,
         meas_all: bool = False,
-        telecnot_errors: tuple[str, float] | None = None
+        telecnot_errors: list[tuple[str, float]] | None = None,
+        **kwargs
     ) -> QuantumCircuit:
 
     qubits = [QuantumRegister(1, f't{i}') for i in range(n_parties)]
@@ -154,9 +155,8 @@ def apply_parallel_toffoli_via_fanout(
         ctrl1_reg: QuantumRegister,
         ctrl2_regs: list[QuantumRegister],
         targ_regs: list[QuantumRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-    ) -> QuantumCircuit:
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+    ) -> None:
     """
     Red circuit from Fig. 5(e) of QRACD
     """
@@ -166,7 +166,6 @@ def apply_parallel_toffoli_via_fanout(
     qubits = ctrl1_regs + ctrl2_regs + targ_regs
 
     n_fanout = get_fanout_gate_by_custom_unitary(n_trgts)
-    two_n_fanout = get_fanout_gate_by_custom_unitary(2*n_trgts)
 
     # tdg^n is periodic mod 8 so no need to aply more than 2 gates
     if n_trgts % 8 == 1:
@@ -194,13 +193,13 @@ def apply_parallel_toffoli_via_fanout(
     if n_fanout_errors is not None:
         add_custom_error_injection(qc, ctrl1_regs + targ_regs, n_fanout_errors)
 
-    qc.t(ctrl2_regs + targ_regs)
-    # qc.append(two_n_fanout, qubits)
-    # if two_n_fanout_errors is not None:
-    #     add_custom_error_injection(qc, qubits, two_n_fanout_errors)
+    qc.t(ctrl2_regs)
+
     qc.append(n_fanout, ctrl1_regs + ctrl2_regs)
     if n_fanout_errors is not None:
         add_custom_error_injection(qc, ctrl1_regs + ctrl2_regs, n_fanout_errors)
+
+    qc.t(targ_regs)
 
     qc.append(n_fanout, ctrl1_regs + targ_regs)
     if n_fanout_errors is not None:
@@ -218,10 +217,9 @@ def apply_parallel_toffoli_via_fanout(
     qc.h(targ_regs)
 
 def get_parallel_toffoli_via_fanout_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
         **kwargs
     ):
 
@@ -245,8 +243,7 @@ def get_parallel_toffoli_via_fanout_circ(
         ctrl1_reg=ctrl1_reg,
         ctrl2_regs=ctrl2_regs,
         targ_regs=targ_regs,
-        n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors
+        n_fanout_errors=n_fanout_errors
     )
 
     if meas_all:
@@ -264,8 +261,7 @@ def apply_teleported_toffoli(
         party_B_bell_regs: list[QuantumRegister],
         party_A_bell_cregs: list[ClassicalRegister],
         party_B_bell_cregs: list[ClassicalRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None
+        n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
         Orange circuit from Fig. 5(d) of QRACD.
@@ -293,7 +289,6 @@ def apply_teleported_toffoli(
             ctrl2_regs=party_A_bell_regs,
             targ_regs=targ_regs,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
         )
 
 
@@ -303,10 +298,9 @@ def apply_teleported_toffoli(
                 qc.z(ctrl2_regs[i])
 
 def get_teleported_toffoli_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
         **kwargs
     ):
 
@@ -348,8 +342,7 @@ def get_teleported_toffoli_circ(
         party_B_bell_regs=party_B_bell_regs,
         party_A_bell_cregs=party_A_bell_cregs,
         party_B_bell_cregs=party_B_bell_cregs,
-        n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors
+        n_fanout_errors=n_fanout_errors
     )
 
     if meas_all:
@@ -440,8 +433,7 @@ def apply_CSWAP_teledata(
         party_A_bell_cregs: list[ClassicalRegister],
         party_A_ancilla_cregs: list[ClassicalRegister],
         party_B_bell_cregs: list[ClassicalRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None
+        n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
         CSWAP circuit from Fig. 5(c) of QRACD. Applies
@@ -477,7 +469,6 @@ def apply_CSWAP_teledata(
             ctrl2_regs=state_A,
             targ_regs=party_A_ancilla_regs,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
         )
         qc.cx(party_A_ancilla_regs, state_A)
 
@@ -501,10 +492,9 @@ def apply_CSWAP_teledata(
         )
 
 def get_CSWAP_teledata_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
         **kwargs
     ):
     n_qubits = len(input_bitstr)
@@ -550,7 +540,6 @@ def get_CSWAP_teledata_circ(
         party_A_ancilla_cregs=party_A_ancilla_cregs,
         party_B_bell_cregs=party_B_bell_cregs,
         n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors
     )
 
     if meas_all:
@@ -568,8 +557,7 @@ def apply_CSWAP_telegate(
         party_B_bell_regs: list[QuantumRegister],
         party_A_bell_cregs: list[ClassicalRegister],
         party_B_bell_cregs: list[ClassicalRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None
+        n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
         CSWAP circuit from Fig. 5(b) of QRACD. Applies
@@ -610,8 +598,7 @@ def apply_CSWAP_telegate(
             party_B_bell_regs=party_B_bell_regs,
             party_A_bell_cregs=party_A_bell_cregs,
             party_B_bell_cregs=party_B_bell_cregs,
-            n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
+            n_fanout_errors=n_fanout_errors
         )
 
         # reset and reshare bell pairs
@@ -630,10 +617,9 @@ def apply_CSWAP_telegate(
         )
 
 def get_CSWAP_telegate_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
         **kwargs
     ):
     n_qubits = len(input_bitstr)
@@ -673,8 +659,7 @@ def get_CSWAP_telegate_circ(
         party_B_bell_regs=party_B_bell_regs,
         party_A_bell_cregs=party_A_bell_cregs,
         party_B_bell_cregs=party_B_bell_cregs,
-        n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors
+        n_fanout_errors=n_fanout_errors
     )
 
     if meas_all:
@@ -691,9 +676,9 @@ def apply_teleported_toffoli_fewer_ancillas(
         targ_regs: list[QuantumRegister],
         party_A_anc_regs: list[QuantumRegister],
         party_A_anc_cregs: list[ClassicalRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-        pre_teletoffoli_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+        pre_teletoffoli_errors: list[tuple[str, float]] | None = None,
+        **kwargs
     ) -> None:
         """
         Orange circuit from Fig. 5(d) of QRACD
@@ -714,8 +699,7 @@ def apply_teleported_toffoli_fewer_ancillas(
             ctrl1_reg=ctrl1_reg,
             ctrl2_regs=party_A_anc_regs,
             targ_regs=targ_regs,
-            n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
+            n_fanout_errors=n_fanout_errors
         )
 
         for i in range(len(targ_regs)):
@@ -730,9 +714,9 @@ def apply_CSWAP_teledata_fewer_ancillas(
         ctrl_reg: QuantumRegister,
         state_A: list[QuantumRegister],
         state_B: list[QuantumRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-        teledata_errors: tuple[str, float] | None = None
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+        teledata_errors: list[tuple[str, float]] | None = None,
+        **kwargs
     ) -> None:
         """
         CSWAP circuit from Fig. 5(c) of QRACD. Applies
@@ -755,7 +739,6 @@ def apply_CSWAP_teledata_fewer_ancillas(
             ctrl2_regs=state_A,
             targ_regs=state_B,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
         )
         qc.cx(state_B, state_A)
 
@@ -764,13 +747,13 @@ def apply_CSWAP_teledata_fewer_ancillas(
                 add_custom_error_injection(qc, [qubit], teledata_errors)
 
 def get_CSWAP_teledata_fewer_ancillas_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-        teledata_errors: tuple[str, float] | None = None,
-        **kwargs,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+        teledata_errors: list[tuple[str, float]] | None = None,
+        **kwargs
     ):
+
     n_qubits = len(input_bitstr)
     state_size = (n_qubits - 1)//2
 
@@ -795,7 +778,6 @@ def get_CSWAP_teledata_fewer_ancillas_circ(
         state_A=state_A_regs,
         state_B=state_B_regs,
         n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors,
         teledata_errors=teledata_errors
     )
 
@@ -812,10 +794,9 @@ def apply_CSWAP_telegate_fewer_ancillas(
         state_B: list[QuantumRegister],
         party_A_anc_regs: list[QuantumRegister],
         party_A_anc_cregs: list[ClassicalRegister],
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-        telecnot_errors: tuple[str, float] | None = None,
-        pre_teletoffoli_errors: tuple[str, float] | None = None,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+        telecnot_errors: list[tuple[str, float]] | None = None,
+        pre_teletoffoli_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
         CSWAP circuit from Fig. 5(b) of QRACD. Applies
@@ -843,7 +824,6 @@ def apply_CSWAP_telegate_fewer_ancillas(
             party_A_anc_regs=party_A_anc_regs,
             party_A_anc_cregs=party_A_anc_cregs,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors,
             pre_teletoffoli_errors=pre_teletoffoli_errors,
         )
 
@@ -853,13 +833,12 @@ def apply_CSWAP_telegate_fewer_ancillas(
                 add_custom_error_injection(qc, [state_A[i], state_B[i]], telecnot_errors)
 
 def get_CSWAP_telegate_fewer_ancillas_circ(
-        input_bitstr: str | None = None,
+        input_bitstr: str,
         meas_all: bool = False,
-        n_fanout_errors: tuple[str, float] | None = None,
-        two_n_fanout_errors: tuple[str, float] | None = None,
-        telecnot_errors: tuple[str, float] | None = None,
-        pre_teletoffoli_errors: tuple[str, float] | None = None,
-        **kwargs,
+        n_fanout_errors: list[tuple[str, float]] | None = None,
+        telecnot_errors: list[tuple[str, float]] | None = None,
+        pre_teletoffoli_errors: list[tuple[str, float]] | None = None,
+        **kwargs
     ):
     n_qubits = len(input_bitstr)
     state_size = (n_qubits - 1)//2
@@ -891,7 +870,6 @@ def get_CSWAP_telegate_fewer_ancillas_circ(
         party_A_anc_regs=party_A_anc_regs,
         party_A_anc_cregs=anc_cregs,
         n_fanout_errors=n_fanout_errors,
-        two_n_fanout_errors=two_n_fanout_errors,
         telecnot_errors=telecnot_errors,
         pre_teletoffoli_errors=pre_teletoffoli_errors,
     )

@@ -15,4 +15,3 @@ test_truth_table_tomography_parallel_toffoli = get_truth_table_tomography(
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
     n_trgts=3,  # Adjust as needed for your tests
 )
-

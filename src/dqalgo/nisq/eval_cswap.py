@@ -37,7 +37,6 @@ def eval_CSWAP_teledata_single_thread(
     n_data_qubits = 2*n_trgts + 1
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
     teledata_errors = get_teledata_error_probs(n_trgts=1, p2=p2)
 
     noise_model = get_depolarizing_noise_model(p_1q=p2/10, p_2q=p2, p_meas=p2)
@@ -57,7 +56,6 @@ def eval_CSWAP_teledata_single_thread(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors,
             teledata_errors=teledata_errors,
         )
 
@@ -79,7 +77,6 @@ def eval_CSWAP_telegate_single_thread(
     n_data_qubits = 2*n_trgts + 1
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=p2)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=p2)
     telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=p2)
     pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=p2)
 
@@ -100,7 +97,6 @@ def eval_CSWAP_telegate_single_thread(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors,
             telecnot_errors=telecnot_errors,
             pre_teletoffoli_errors=pre_teletoffoli_errors
         )
@@ -115,7 +111,7 @@ def eval_CSWAP_telegate_single_thread(
 
 
 def evaluate_single_input_teledata(args):
-    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors = args
+    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors = args
     n_data_qubits = 2*n_trgts + 1
 
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
@@ -130,7 +126,6 @@ def evaluate_single_input_teledata(args):
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()
@@ -160,13 +155,12 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=1024
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
     print('Constructing circuits')
 
     # Prepare arguments for parallel processing
     eval_args = [
-        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors)
+        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors)
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
 
@@ -187,7 +181,7 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=1024
 
 
 def evaluate_single_input_telegate(args):
-    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors = args
+    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors = args
     n_data_qubits = 2*n_trgts + 1
 
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
@@ -202,7 +196,6 @@ def evaluate_single_input_telegate(args):
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
-            two_n_fanout_errors=two_n_fanout_errors
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()
@@ -232,13 +225,12 @@ def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
     print('Constructing circuits')
 
     # Prepare arguments for parallel processing
     eval_args = [
-        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors, two_n_fanout_errors)
+        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors)
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
 

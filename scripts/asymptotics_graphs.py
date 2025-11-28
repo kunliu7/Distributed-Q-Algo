@@ -10,6 +10,7 @@ def k_bound(eps, p, n):
 
 def main():
     sns.set_theme(style="darkgrid")
+    plt.figure(figsize=(8, 4))
 
     p = np.linspace(1, 8, num=5000)
     p = np.power(10, -p)
@@ -29,7 +30,7 @@ def main():
         plt.fill_between(p, k, alpha=0.2)
 
     # get entanglement distillation data
-    with open('../data/entanglement-dist/ataides_2025.json', 'r') as f:
+    with open('./data/entanglement-dist/ataides_2025.json', 'r') as f:
         entanglement_dist_data = json.load(f)
 
     # plot data from entanglement distillation
@@ -65,9 +66,12 @@ def main():
     plt.xlim(x_lims)
     plt.title(f"Upper bounds on $k$ for fixed values of $\epsilon$, $n = {n}$")
     plt.legend()
+    plt.grid(alpha=0.3)
+
+    plt.tight_layout()
 
     # Save plot
-    plt.savefig("../data/asymptotics-graphs/k_bound_plot.pdf")
+    plt.savefig("./data/asymptotics-graphs/k_bound_plot.pdf")
     plt.show()
 
 if __name__ == "__main__":

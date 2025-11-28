@@ -58,14 +58,12 @@ def get_truth_table_tomography(
         n_samples = min(samples, 2**n_data_qubits)
 
         n_fanout_errors = None
-        two_n_fanout_errors = None
         teledata_errors = None
         pre_teletoffoli_errors= None
         telecnot_errors = None
 
         if 'fanout' in error_types:
             n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
-            two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
 
         if 'teledata' in error_types:
             teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
@@ -90,7 +88,6 @@ def get_truth_table_tomography(
                     input_bitstr=input_bitstr,
                     meas_all=True,
                     n_fanout_errors=n_fanout_errors,
-                    two_n_fanout_errors=two_n_fanout_errors,
                     teledata_errors=teledata_errors,
                     pre_teletoffoli_errors=pre_teletoffoli_errors,
                     telecnot_errors=telecnot_errors
@@ -112,4 +109,3 @@ def get_truth_table_tomography(
         print(f"stddev fidelity: {stddev_fid}")
 
     return test_truth_table_tomography
-

@@ -115,7 +115,6 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
     teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
 
     fids = []
@@ -134,7 +133,6 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
-                two_n_fanout_errors=two_n_fanout_errors,
                 teledata_errors=teledata_errors
             )
 
@@ -147,8 +145,8 @@ def eval_CSWAP_teledata(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
         fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
         fids.append(fid)
 
-    mean_fid = np.mean(fids)
-    stddev_fid = np.std(fids)
+    mean_fid = float(np.mean(fids))
+    stddev_fid = float(np.std(fids))
 
     return mean_fid, stddev_fid
 
@@ -160,7 +158,6 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
-    two_n_fanout_errors = get_fanout_error_probs(n_trgts=2*n_trgts, p2=10*p_err)
     telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
     pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=10*p_err)
 
@@ -180,7 +177,6 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
                 input_bitstr=input_bitstr,
                 meas_all=True,
                 n_fanout_errors=n_fanout_errors,
-                two_n_fanout_errors=two_n_fanout_errors,
                 telecnot_errors=telecnot_errors,
                 pre_teletoffoli_errors=pre_teletoffoli_errors
             )
@@ -194,8 +190,8 @@ def eval_CSWAP_telegate(n_trgts: int, p_err: float, shots_per_circ=128, circs_pe
         fid = compute_classical_fidelity(ideal_counts, normed_noisy_counts)
         fids.append(fid)
 
-    mean_fid = np.mean(fids)
-    stddev_fid = np.std(fids)
+    mean_fid = float(np.mean(fids))
+    stddev_fid = float(np.std(fids))
 
     return mean_fid, stddev_fid
 

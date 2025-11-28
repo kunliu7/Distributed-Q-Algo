@@ -4,8 +4,12 @@ from qiskit import QuantumCircuit, QuantumRegister
 import numpy as np
 import random
 
-def get_register_counts(counts: dict[str, int], creg_sizes: list[int], target_reg_name: str,
-                        reg_names: list[str]) -> dict[str, int]:
+def get_register_counts(
+        counts: dict[str, int],
+        creg_sizes: list[int],
+        target_reg_name: str,
+        reg_names: list[str]
+    ) -> dict[str, int]:
     """If the circuit has multiple target registers, this function can be used to get the counts of a specific target register.
 
     Args:
@@ -68,7 +72,7 @@ def get_depolarizing_noise_model(
     return noise_model
 
 
-def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
+def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: list[tuple[str, float]]) -> None:
     for pauli_str, prob in error_probs:
         if np.random.rand() < prob:
             # Apply the Pauli error to the qubits in the specified indices.
@@ -80,17 +84,9 @@ def add_fanout_monte_carlo_error(qc: QuantumCircuit, qubit_indices: list[Quantum
                 elif pauli_str[i] == "Z":
                     qc.z(qubit_index)
 
-# def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: tuple[str, float]) -> None:
-#     for pauli_str, prob in error_probs:
-#         fanout_error = pauli_error([
-#             (pauli_str, prob),
-#             ("I" * len(pauli_str), 1 - prob)
-#         ]).to_instruction()
-#         qc.append(fanout_error, qubit_indices)
-
 
 def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRegister], error_probs: list[tuple[str, float]]) -> None:
-    total_error_prob = sum(prob for _, prob in error_probs)
+    total_error_prob = sum([prob for _, prob in error_probs])
     fanout_error = pauli_error(error_probs + [("I" * len(error_probs[0][0]), 1 - total_error_prob)]).to_instruction()
     qc.append(fanout_error, qubit_indices)
 
@@ -98,17 +94,11 @@ def add_custom_error_injection(qc: QuantumCircuit, qubit_indices: list[QuantumRe
 def reduce_stabilizers(stabs: list[stim.PauliString], keep_ids: list[int]) -> list[stim.PauliString]:
     reduced = []
     for stab in stabs:
-        # Convert to string representation.
         full_str = str(stab)
-        # Build the reduced Pauli string using only the kept indices.
-        # (Make sure the ordering is what you expect.)
         pauli_str = full_str[1:]
         sign = full_str[0]
-        # print(f"pauli_str: {pauli_str}, sign: {sign}")
         reduced_pauli_str = "".join(pauli_str[i] for i in keep_ids)
-        # Optionally, you might skip generators that become trivial.
         if set(reduced_pauli_str) != {"_"}:
-            # print(f"{stab=}, reduced_pauli_str: {reduced_pauli_str}, set(reduced_pauli_str): {set(reduced_pauli_str)}")
             reduced.append(stim.PauliString(sign + reduced_pauli_str))
     print(f"reduced: {reduced}")
     return reduced

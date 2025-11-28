@@ -1,7 +1,12 @@
-# Distributed-Q-Algo
-Distributed quantum algorithms.
+# COMPAS: A Distributed Multi-Party SWAP Test for Parallel Quantum Algorithms (ASPLOS 2026)
 
-## Install Locally (recommended)
+### [Brayden Goldstein-Gelb](http://brayden-gg.github.io), [Kun Liu](https://www.linkedin.com/in/kun-liu-0276141a4), [John M. Martyn](https://scholar.google.com/citations?user=d-QUapAAAAAJ&hl=en), [Hengyun Zhou](https://scholar.google.com/citations?user=XLHpQy8AAAAJ&hl=en), [Yongshan Ding](https://www.yongshanding.com), [Yuan Liu](https://ece.ncsu.edu/people/yliu335/)
+
+We provide code to simulate the circuit constructions developed in the paper.
+
+## Installation instructions
+
+### Install Locally (recommended)
 
 1. Create your own conda environment with Python version == 3.12
 ```bash
@@ -42,14 +47,14 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 
 `-s` is to display `print` message in the test.
 
-## How to run CSWAP circuit
+## How to run the CSWAP circuit
 To run the teledata scheme of the CSWAP run:
 ```
 python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --scheme teledata
 
 ```
 
-## Generate error distribution of Fanout
+## Generate the error distribution of a Fanout circuit
 
 1. Generation
 ```bash
@@ -58,7 +63,7 @@ python scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
 Read the script to see how to customize number of targets, error rates and shots.
 The data will be saved at `data/nisq/fanout/` by `NISQFanoutDataMgr`.
 
-2. Read
+2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's
 Tableau` section.
@@ -82,7 +87,7 @@ python scripts/eval_nisq_teleport.py -t 6 --p2 0.001 -s 1024
 Read the script to see how to customize number of targets, error rates and shots.
 The data will be saved at `data/nisq/teleport/` by `NISQTeleportDataMgr`.
 
-2. Read
+2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval Teleportation circuit using Stim.TableauSimulator` section.
 ```python
@@ -105,7 +110,7 @@ python scripts/eval_nisq_telegate.py -t 6 --p2 0.001 -s 1024
 Read the script to see how to customize number of targets, error rates and shots.
 The data will be saved at `data/nisq/telegate/` by `NISQTelegateDataMgr`.
 
-2. Read
+2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval telegate` section.
 ```python
@@ -129,7 +134,7 @@ python scripts/eval_nisq_parallel_cnots.py -t 6 --p2 0.001 -s 1024
 Read the script to see how to customize number of targets, error rates and shots.
 The data will be saved at `data/nisq/parallel_cnots/` by `NISQParallelCNOTsDataMgr`.
 
-2. Read
+2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval parallel CNOTs` section.
 ```python
@@ -198,7 +203,3 @@ We also provide a script which compiles the results and replaces it with a csv f
 If you would like to plot the data, you can run the plotting script as well, which will output a pdf in the `/data/nisq/cswap_graph` folder:
 
 ```python ./scripts/generate_graph.py --data_dir /path/to/data --method teledata```
-
-
-
-

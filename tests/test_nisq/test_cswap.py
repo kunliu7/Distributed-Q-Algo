@@ -70,5 +70,3 @@ test_cswap_telegate_fewer_ancillas_truth_table_tomography = get_truth_table_tomo
     shots_per_circ=1024,
     circs_per_input=1
 )
-
-

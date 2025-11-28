@@ -21,12 +21,12 @@ def main():
     parser.add_argument("--save_path", type=str, default='./data/nisq/overall_error_graphs/overall_simulations.pdf')
     args = parser.parse_args()
 
-    fig, axs = plt.subplots(1, 2, figsize=(10, 4))
+    fig, axs = plt.subplots(1, 2, figsize=(11, 4))
     paths = [args.teledata_path, args.telegate_path]
     schemes = ['Teledata', 'Telegate']
     ghz_df = pd.read_csv(args.ghz_path)
 
-    for cswap_path, ax, scheme in zip(paths, axs, schemes):
+    for index, (cswap_path, ax, scheme) in enumerate(zip(paths, axs, schemes)):
         cswap_df = pd.read_csv(cswap_path)
 
         for p2_val in sorted(cswap_df['p2'].unique()):
@@ -52,13 +52,26 @@ def main():
                     ax.plot(n_fit, final_fid, color=colors[p2_val], linestyle=line_styles[k])
 
 
-        ax.set_xlabel(r'Target State Size ($n$)', fontsize=12)
-        ax.set_ylabel('Fidelity (Estimate)', fontsize=12)
-        ax.set_title(f'Overall QRACD Fidelity Estimate ({scheme})', fontsize=13)
-        # ax.set_xticks()
+        ax.set_xlabel(r'Target State Size ($n$)', fontsize=18)
+        if index == 0:
+            ax.set_ylabel('Fidelity (Estimate)', fontsize=18)
+        else:
+            ax.tick_params(labelleft=False)
+        # ax.set_title(f'Overall QRACD Fidelity ({scheme})', fontsize=18)
+        ax.tick_params(axis='both', which='major', labelsize=15)
         ax.set_ylim(0, 1)
-        ax.legend(fontsize=10)
+        ax.legend(fontsize=15)
         ax.grid(alpha=0.3)
+
+    params = {'legend.fontsize': 16,
+            #   ‘figure.figsize’: (8, 5),
+              'axes.labelsize': 18,  # ‘x-large’,
+              'axes.titlesize': 20,  # ‘x-large’,
+              'xtick.labelsize': 14,
+              'ytick.labelsize': 18,
+              'pdf.fonttype': 42,
+              'ps.fonttype': 42, }
+    plt.rcParams.update(params)
 
     fig.tight_layout()
     plt.savefig(args.save_path)

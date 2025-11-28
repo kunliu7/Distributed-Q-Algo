@@ -48,13 +48,26 @@ def main():
             )
 
 
-    plt.xlabel(r'Number of Parties ($r$)', fontsize=12)
-    plt.ylabel('Fidelity', fontsize=12)
-    plt.title(f'Fidelity of GHZ State', fontsize=13)
+    plt.xlabel(r'Number of Parties ($r$)', fontsize=18)
+    plt.ylabel('Fidelity', fontsize=18)
+    # plt.title(f'Fidelity of GHZ State', fontsize=18)
     plt.xticks(df['n_parties'].unique())
+    plt.tick_params(axis='both', which='major', labelsize=15)
     plt.ylim(0.6, 1)
-    plt.legend(fontsize=10)
+    plt.legend(fontsize=12)
     plt.grid(alpha=0.3)
+
+    params = {'legend.fontsize': 16,
+            #   ‘figure.figsize’: (8, 5),
+              'axes.labelsize': 18,  # ‘x-large’,
+              'axes.titlesize': 20,  # ‘x-large’,
+              'xtick.labelsize': 14,
+              'ytick.labelsize': 18,
+              'pdf.fonttype': 42,
+              'ps.fonttype': 42, }
+    plt.rcParams.update(params)
+
+    plt.tight_layout()
 
     plt.savefig(save_path)
     plt.show()
