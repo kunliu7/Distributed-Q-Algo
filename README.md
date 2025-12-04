@@ -50,8 +50,7 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ## How to run the CSWAP circuit
 To run the teledata scheme of the CSWAP run:
 ```
-python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --scheme teledata
-
+python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
 ```
 
 ## Generate the error distribution of a Fanout circuit
@@ -60,23 +59,12 @@ python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --scheme teledata
 ```bash
 python scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates and shots.
-The data will be saved at `data/nisq/fanout/` by `NISQFanoutDataMgr`.
+Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's
 Tableau` section.
-```python
-n_trgts_lst = [4, 6, 8]
-p2s = [0.001, 0.003, 0.005]
-n_shots = 100000
-
-dmgr = NISQFanoutDataMgr()
-data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
-error_counts_lst, _, _ = data
-print(error_counts_lst)
-```
 
 ## Generate error distribution of Quantum Teleportation
 
@@ -84,22 +72,12 @@ print(error_counts_lst)
 ```bash
 python scripts/eval_nisq_teleport.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates and shots.
-The data will be saved at `data/nisq/teleport/` by `NISQTeleportDataMgr`.
+Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval Teleportation circuit using Stim.TableauSimulator` section.
-```python
-n_trgts_lst = [4, 6, 8]
-p2s = [0.001, 0.003, 0.005]
-n_shots = 100000
 
-dmgr = NISQTeleportDataMgr()
-data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
-error_counts_lst, _, _ = data
-print(error_counts_lst)
-```
 
 ## Generate error distribution of telegate
 
@@ -107,47 +85,24 @@ print(error_counts_lst)
 ```bash
 python scripts/eval_nisq_telegate.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates and shots.
-The data will be saved at `data/nisq/telegate/` by `NISQTelegateDataMgr`.
+Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval telegate` section.
-```python
-n_trgts_lst = [4, 6, 8]
-p2s = [0.001, 0.003, 0.005]
-n_shots = 100000
-
-dmgr = NISQTelegateDataMgr()
-data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
-error_counts_lst, _, _ = data
-print(error_counts_lst)
-```
 
 
 ## Generate error distribution of parallel CNOTs
 
 1. Generation
 ```bash
-python scripts/eval_nisq_parallel_cnots.py -t 6 --p2 0.001 -s 1024
+python scripts/eval_nisq_teleported_cnots.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates and shots.
-The data will be saved at `data/nisq/parallel_cnots/` by `NISQParallelCNOTsDataMgr`.
+Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval parallel CNOTs` section.
-```python
-n_trgts_lst = [4, 6, 8]
-p2s = [0.001, 0.003, 0.005]
-n_shots = 100000
-
-dmgr = NISQParallelCNOTsDataMgr()
-data = dmgr.load(n_trgts=n_trgts_lst, p2=p2s, n_shots=n_shots)
-error_counts_lst, _, _ = data
-print(error_counts_lst)
-
-```
 
 ## Running Simulations via SLURM
 
