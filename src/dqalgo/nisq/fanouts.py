@@ -8,6 +8,11 @@ class BaseFanoutBuilder:
 
 
 class BaumerFanoutBuilder(BaseFanoutBuilder):
+    """Reproduce the Fanout circuit from Baumer et al.
+    https://arxiv.org/abs/2308.13065
+
+    Two ways to build the circuit: qiskit and stim.
+    """
     def __init__(self, n_trgts: int, ctrl_bit: int, init_trgt_bits: list[int],
                  p1: float = 0.0, p2: float = 0.0, pm: float = 0.0):
         self.n_trgts = n_trgts
