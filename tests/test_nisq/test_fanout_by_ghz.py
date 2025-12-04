@@ -32,23 +32,6 @@ def test_fanout_by_ghz_ideal():
             assert list(reg_counts.keys())[0] == "".join(map(str, expected_trgt_bits + [ctrl_bit]))
 
 
-def test_fanout_by_ghz_noisy_with_superop():
-    # fail to use `SuperOp`: qiskit.exceptions.QiskitError: 'Circuits with control flow operations cannot be converted to an instruction.'
-    noise_model = get_depolarizing_noise_model(p_1q=0.001, p_2q=0.001, p_meas=0.001)
-    n_trgts = 3
-    print(f"Testing {n_trgts} targets")
-    n_qubits = n_trgts + 1
-
-    qc = get_Fanout_circ_by_GHZ_w_reset(n_trgts, None, meas_all=True)
-    qptexp = ProcessTomography(qc)
-    qptdata = qptexp.run(backend=AerSimulator(noise_model=noise_model,
-                         shots=1000, seed_simulator=12345)).block_for_results()
-    choi_out = qptdata.analysis_results("state", dataframe=True).iloc[0].values
-
-    fid = process_fidelity(ideal_superop, noisy_superop)
-    assert fid > 0.99
-
-
 def test_truth_table_tomography():
     n_trgts = 3
     n_qubits = n_trgts + 1
