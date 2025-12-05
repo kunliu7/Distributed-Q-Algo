@@ -8,29 +8,30 @@ We provide code to simulate the circuit constructions developed in the paper.
 
 ### Install Locally (recommended)
 
-1. Create your own conda environment with Python version == 3.12
+1. Create your own conda environment with Python version 3.12
 ```bash
 conda create -n your_env_name python=3.12
 ```
 
-2. Install dependencies:
+2. Install the dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Git clone this repository, and `cd` into the folder, and install this package locally:
+3. Clone this repository, `cd` into the folder, and install this package locally:
 ```bash
 pip install -e .
 ```
 
-4. Whenever activate this conda environment, you can use it as a Python package anywhere:
+4. After activating this conda environment, you can use it as a Python package anywhere:
 ```bash
 from dqalgo.nisq.fanouts import BaumerFanoutBuilder
 ```
 
-5. Use in .ipynb and modify the code
-If you modify the code in `/src` and want to test it in .ipynb, you need to
-add these two commands at the top cell of your .ipynb:
+5. Note about Jupyter notebooks
+
+If you modify the code in the `/src` folder and want to test it in a jupyter notebook, you need to
+add these two commands at the top cell of your notebook:
 ```bash
 %load_ext autoreload
 %autoreload 2
@@ -40,7 +41,13 @@ This will autoreload your modification.
 
 ## How to run tests
 
-For one test:
+To run all tests (this may take a while), run
+
+```bash
+pytest
+```
+
+For a single test test:
 ```bash
 pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ```
@@ -48,21 +55,24 @@ pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 `-s` is to display `print` message in the test.
 
 ## How to run the CSWAP circuit
-To run the teledata scheme of the CSWAP run:
+To run the teledata scheme of the CSWAP operation, run:
 ```
 python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
 ```
+
+You can change the number of targets via the `--n_trgts` (`-t`) argument and set the method to either `teledata` or `telegate`.
 
 ## Generate the error distribution of a Fanout circuit
 
 1. Generation
 ```bash
-python scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
+python ./scripts/eval_nisq_fanout.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates, shots and saving directory.
+Here, `-t` is short for `--n_trgts` and `-s` or `--shots` can be used to set the number of shots. `--p2` represents the error probability of two-qubit gates (the 1-qubit error rate is set to `p2/10`)
 
 2. View results
 
+You can view the results in the included Jupyter notebook.
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's
 Tableau` section.
 
@@ -72,20 +82,19 @@ Tableau` section.
 ```bash
 python scripts/eval_nisq_teleport.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates, shots and saving directory.
+As above,`-t` is short for `--n_trgts`, `-s`/`--shots` can be used to set the number of shots, and`--p2` represents the error probability of two-qubit gates.
 
 2. View results
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval Teleportation circuit using Stim.TableauSimulator` section.
 
 
-## Generate error distribution of telegate
+## Generate error distribution of a telegate operation
 
 1. Generation
 ```bash
 python scripts/eval_nisq_telegate.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
@@ -98,7 +107,6 @@ See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)
 ```bash
 python scripts/eval_nisq_teleported_cnots.py -t 6 --p2 0.001 -s 1024
 ```
-Read the script to see how to customize number of targets, error rates, shots and saving directory.
 
 2. View results
 
@@ -106,7 +114,7 @@ See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)
 
 ## Running Simulations via SLURM
 
-For large numbers of qubits (in my experience `n_targets > 4`), it may not be feasable to run `eval_nisq_cswap.py` on a local machine. Instead, it may be useful to run `eval_nisq_cswap_parallel.py` on a cluster via SLURM. An example SLURM script, `slurm_script_EXAMPLE.sh` is provided.
+For large numbers of qubits (in my experience `n_targets >= 5`), it may not be feasable to run `eval_nisq_cswap.py` on a local machine. Instead, it may be useful to run `eval_nisq_cswap_parallel.py` on a cluster via SLURM. An example SLURM script, `slurm_script_EXAMPLE.sh` is provided.
 
 1. Edit the SLURM job configuration
 

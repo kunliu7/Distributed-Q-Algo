@@ -8,7 +8,7 @@ import pandas as pd
 """
 Files outputted by HPC jobs will be a single-line .txt file with the fidelity.
 This script computes the mean and standard deviation of all fidelities in a given folder
-and prints them.
+and saves them to a csv file.
 """
 
 def main():

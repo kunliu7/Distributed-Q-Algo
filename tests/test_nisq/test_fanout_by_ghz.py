@@ -40,9 +40,7 @@ def test_truth_table_tomography():
     for init_bits in itertools.product([0, 1], repeat=n_qubits):
         # in QuantumCircuit.initialize, leftmost bit is the (N-1)-th qubit, and rightmost bit is the 0-th qubit
         # here rightmost bit is the control qubit
-        ctrl_bit = init_bits[-1]
         init_bitstr = "".join(map(str, init_bits))
-        expected_trgt_bits = [int((trgt_bit + ctrl_bit) % 2) for trgt_bit in init_bits[:-1]]
         initial_state = [reg for pair in zip([0] * n_qubits, init_bits) for reg in pair]
         init_bitstr_w_anc = "".join(map(str, initial_state))
 
@@ -59,6 +57,7 @@ def test_truth_table_tomography():
         fid = compute_classical_fidelity(ideal_counts, noisy_counts)
         input_to_fid[init_bitstr] = fid
         print(f"fid for {init_bitstr}: {fid}")
+
     print(input_to_fid)
 
     keys = sorted(input_to_fid.keys())

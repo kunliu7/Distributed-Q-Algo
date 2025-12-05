@@ -20,8 +20,15 @@ from dqalgo.nisq.utils import (
 from qiskit_aer import AerSimulator
 
 from tqdm import tqdm
+from typing import Callable
 
-def get_test_ideal(classical_eval, circuit_builder, get_data_qubits, max_test_size=5):
+def get_test_ideal(
+        classical_eval: Callable,
+        circuit_builder: Callable,
+        get_data_qubits: Callable,
+        max_test_size: int=5
+    ):
+
     def test_ideal():
         for n_trgts in range(1, max_test_size+1):
             print(f"Testing {n_trgts} targets")
@@ -47,9 +54,9 @@ def get_truth_table_tomography(
         n_trgts,
         get_data_qubits,
         p_err=0.0001,
-        shots_per_circ=128, # Crashes with anything higher than 128
-        circs_per_input=10, # Repeat 10 times to compensate for low shots
-        samples=150, # Sample space gets large so choose 150 random input bitstrings
+        shots_per_circ=128,
+        circs_per_input=10, # Repeat this many times to compensate for low shots
+        samples=300, # Sample space gets large so choose 150 random input bitstrings
         error_types=('fanout',)
     ):
 
@@ -69,7 +76,7 @@ def get_truth_table_tomography(
             teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
 
         if 'telegate' in error_types:
-            pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=n_trgts, p2=10*p_err)
+            pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=10*p_err)
             telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
 
         fids = []

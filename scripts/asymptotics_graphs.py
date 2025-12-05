@@ -21,7 +21,6 @@ def main():
 
     colors = sns.color_palette()
     markers = ['*', 'o', 's', 'X', '^']
-    codes = ['SC', 'LP']
 
     # plot theoretical bounds for different epsilon values
     for eps in epsilon_values:
@@ -58,7 +57,6 @@ def main():
             marker_idx += 1
 
 
-    # Labels and title
     plt.xlabel("Bell pair logical error rate")
     plt.ylabel("Number of QPUs")
     plt.xscale('log')
@@ -70,7 +68,6 @@ def main():
 
     plt.tight_layout()
 
-    # Save plot
     plt.savefig("./data/asymptotics-graphs/k_bound_plot.pdf")
     plt.show()
 

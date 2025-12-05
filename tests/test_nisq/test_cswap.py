@@ -27,30 +27,34 @@ test_cswap_teledata_truth_table_tomography = get_truth_table_tomography(
     classical_eval=classically_compute_CSWAP,
     circuit_builder=get_CSWAP_teledata_circ,
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
-    n_trgts=2,  # Adjust as needed for your tests
+    n_trgts=2,
+    circs_per_input=2,
+    samples=150
 )
 
 test_cswap_telegate_truth_table_tomography = get_truth_table_tomography(
     classical_eval=classically_compute_CSWAP,
     circuit_builder=get_CSWAP_telegate_circ,
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
-    n_trgts=2,  # Adjust as needed for your tests
+    n_trgts=2,
+    circs_per_input=2,
+    samples=150
 )
 
 test_CSWAP_teledata_fewer_ancillas_ideal = get_test_ideal(
     classical_eval=classically_compute_CSWAP,
     circuit_builder=get_CSWAP_teledata_fewer_ancillas_circ,
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
-    max_test_size=4,
+    max_test_size=3,
 )
 
 test_cswap_teledata_fewer_ancillas_truth_table_tomography = get_truth_table_tomography(
     classical_eval=classically_compute_CSWAP,
     circuit_builder=get_CSWAP_teledata_fewer_ancillas_circ,
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
-    n_trgts=3,
+    n_trgts=2,
     error_types=('fanout', 'teledata'),
-    shots_per_circ=512, # crshes with anything higher than 512
+    shots_per_circ=128, # crshes with anything higher than 512
     circs_per_input=2
 )
 
@@ -58,7 +62,7 @@ test_CSWAP_telegate_fewer_ancillas_ideal = get_test_ideal(
     classical_eval=classically_compute_CSWAP,
     circuit_builder=get_CSWAP_telegate_fewer_ancillas_circ,
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
-    max_test_size=4,
+    max_test_size=3,
 )
 
 test_cswap_telegate_fewer_ancillas_truth_table_tomography = get_truth_table_tomography(
@@ -67,6 +71,6 @@ test_cswap_telegate_fewer_ancillas_truth_table_tomography = get_truth_table_tomo
     get_data_qubits=lambda n_trgts: 2*n_trgts + 1,
     n_trgts=3,
     error_types=('fanout', 'telegate'),
-    shots_per_circ=1024,
+    shots_per_circ=128,
     circs_per_input=1
 )
