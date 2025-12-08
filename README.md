@@ -166,7 +166,7 @@ We also provide a script which compiles the results and replaces it with a csv f
 
 ### Visualization
 
-Figs. 9 and 10 used in the paper were genreated using the following commands, which will take in the generated CSV files from the previous section (or via command line arguments) and save the resulting figures at the provided `--save_path` directory.
+Figs. 9 and 10 used in the paper were generated using the following commands, which will take in the CSV files from the previous section (paths can also be provided as command line arguments) and save the resulting figures at the provided `--save_path` directory.
 
 #### Fig. 9(a)
 
