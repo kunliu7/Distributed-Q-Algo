@@ -1,14 +1,20 @@
+import argparse
 import json
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
 
 
-
 def k_bound(eps, p, n):
     return np.log(1 - eps)/((2 + 6*n)*np.log(1 - 3/4*p))
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--save_path", type=str, default=f'./data/asymptotics-graphs/k_bound_plot.pdf')
+
+    args = parser.parse_args()
+
+    save_dir = args.save_path
     sns.set_theme(style="darkgrid")
     plt.figure(figsize=(8, 4))
 
@@ -68,7 +74,7 @@ def main():
 
     plt.tight_layout()
 
-    plt.savefig("./data/asymptotics-graphs/k_bound_plot.pdf")
+    plt.savefig(save_dir)
     plt.show()
 
 if __name__ == "__main__":

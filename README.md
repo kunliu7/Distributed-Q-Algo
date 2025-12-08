@@ -163,6 +163,23 @@ We also provide a script which compiles the results and replaces it with a csv f
 
 ```python ./scripts/compile_results.py --data_dir /path/to/data```
 
-If you would like to plot the data, you can run the plotting script as well, which will output a pdf in the `/data/nisq/cswap_graph` folder:
 
-```python ./scripts/generate_graph.py --data_dir /path/to/data --method teledata```
+### Visualization
+
+Figs. 9 and 10 used in the paper were genreated using the following commands, which will take in the generated CSV files from the previous section (or via command line arguments) and save the resulting figures at the provided `--save_path` directory.
+
+#### Fig. 9(a)
+
+```python ./scripts/generate_ghz_graph.py```
+
+#### Fig. 9(b)
+
+```python ./scripts/generate_cswap_graph.py```
+
+#### Fig. 9(c)
+
+```python ./scripts/generate_overall_error_graphs.py```
+
+#### Fig. 10
+
+``````python ./scripts/asymptotics_graphs.py``````

@@ -10,12 +10,13 @@ def fidelity_model(n, a, b):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data_dir", type=str, default='./data/nisq/ghz/collected.csv')
+    parser.add_argument("--save_path", type=str, default=f'./data/nisq/ghz_graphs/ghz_simulations.pdf')
     parser.add_argument("--min_parties", type=int, default=1)
     parser.add_argument("--max_parties", type=int, default=999)
 
     args = parser.parse_args()
     csv_path = args.data_dir
-    save_path = f'./data/nisq/ghz_graphs/ghz_simulations.pdf'
+    save_path = args.save_path
     df = pd.read_csv(csv_path)
     df = df[(df['n_parties'] >= args.min_parties) & (df['n_parties'] <= args.max_parties)]
 
