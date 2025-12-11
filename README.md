@@ -68,7 +68,7 @@ This is the top-level script to simulate the CSWAP circuits.
 
 To run the teledata scheme of the CSWAP operation, run:
 ```
-python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
+python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata --parallel
 ```
 
 You can change the number of targets via the `--n_trgts` (`-t`) argument and set the method to either `teledata` or `telegate`.
