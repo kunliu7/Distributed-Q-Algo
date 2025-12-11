@@ -3,6 +3,14 @@
 ### [Brayden Goldstein-Gelb](http://brayden-gg.github.io), [Kun Liu](https://www.linkedin.com/in/kun-liu-0276141a4), [John M. Martyn](https://jmmartyn.github.io), [Hengyun Zhou](https://scholar.google.com/citations?user=XLHpQy8AAAAJ&hl=en), [Yongshan Ding](https://www.yongshanding.com), [Yuan Liu](https://ece.ncsu.edu/people/yliu335/)
 
 We provide code to simulate the circuit constructions developed in the paper.
+All the code, data and visualizations are in this repository.
+
+**High-level overview:**
+As mentioned in the paper, to simulate the circuit efficiently, we separate the overall circuit into multiple sub-circuits, and simulate each sub-circuit independently and derive their error distributions.
+Then we can combine the error distributions of the sub-circuits to get the fidelity of the overall circuit.
+
+**Hardware requirements:**
+All the data used in the paper can be generated on a MacBook Pro with M1 chip and 16GB RAM.
 
 ## Installation instructions
 
@@ -39,22 +47,26 @@ add these two commands at the top cell of your notebook:
 
 This will autoreload your modification.
 
-## How to run tests
+6. Run tests
 
 To run all tests (this may take a while), run
 
 ```bash
-pytest
+pytest tests
 ```
+which might take a while.
 
-For a single test test:
+For a single test function in a specific test file:
 ```bash
 pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ```
 
 `-s` is to display `print` message in the test.
 
-## How to run the CSWAP circuit
+## How to run the CSWAP circuits (top-level)
+
+This is the top-level script to simulate the CSWAP circuits.
+
 To run the teledata scheme of the CSWAP operation, run:
 ```
 python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
@@ -62,7 +74,9 @@ python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
 
 You can change the number of targets via the `--n_trgts` (`-t`) argument and set the method to either `teledata` or `telegate`.
 
-## Generate the error distribution of a Fanout circuit
+Its components are simulated below.
+
+### Generate the error distribution of a Fanout circuit
 
 1. Generation
 ```bash
@@ -76,7 +90,7 @@ You can view the results in the included Jupyter notebook.
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# eval Baumer Fanout using stim's
 Tableau` section.
 
-## Generate error distribution of Quantum Teleportation
+### Generate error distribution of Quantum Teleportation
 
 1. Generation
 ```bash
@@ -89,7 +103,7 @@ As above,`-t` is short for `--n_trgts`, `-s`/`--shots` can be used to set the nu
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval Teleportation circuit using Stim.TableauSimulator` section.
 
 
-## Generate error distribution of a telegate operation
+### Generate error distribution of a telegate operation
 
 1. Generation
 ```bash
@@ -101,7 +115,7 @@ python scripts/eval_nisq_telegate.py -t 6 --p2 0.001 -s 1024
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval telegate` section.
 
 
-## Generate error distribution of parallel CNOTs
+### Generate error distribution of parallel CNOTs
 
 1. Generation
 ```bash
@@ -112,9 +126,29 @@ python scripts/eval_nisq_teleported_cnots.py -t 6 --p2 0.001 -s 1024
 
 See [notebooks/vis/eval_nisq_fanout.ipynb](notebooks/vis/eval_nisq_fanout.ipynb)'s `# Eval parallel CNOTs` section.
 
-## Running Simulations via SLURM
+## Visualization
 
-For large numbers of qubits (in my experience `n_targets >= 5`), it may not be feasable to run `eval_nisq_cswap.py` on a local machine. Instead, it may be useful to run `eval_nisq_cswap_parallel.py` on a cluster via SLURM. An example SLURM script, `slurm_script_EXAMPLE.sh` is provided.
+Figs. 9 and 10 used in the paper were generated using the following commands, which will take in the CSV files from the previous section (paths can also be provided as command line arguments) and save the resulting figures at the provided `--save_path` directory.
+
+### Fig. 9(a)
+
+```python ./scripts/generate_ghz_graph.py```
+
+### Fig. 9(b)
+
+```python ./scripts/generate_cswap_graph.py```
+
+### Fig. 9(c)
+
+```python ./scripts/generate_overall_error_graphs.py```
+
+### Fig. 10
+
+```python ./scripts/asymptotics_graphs.py```
+
+## Running Simulations via SLURM (optional)
+
+If the number of targets is large, it may not be feasable to run `eval_nisq_cswap.py` on a local machine. Instead, it may be useful to run `eval_nisq_cswap_parallel.py` on a cluster via SLURM. An example SLURM script, `slurm_script_EXAMPLE.sh` is provided.
 
 1. Edit the SLURM job configuration
 
@@ -162,24 +196,3 @@ This will create 150 jobs, each sampling a single random input bitstring. Each j
 We also provide a script which compiles the results and replaces it with a csv file:
 
 ```python ./scripts/compile_results.py --data_dir /path/to/data```
-
-
-### Visualization
-
-Figs. 9 and 10 used in the paper were generated using the following commands, which will take in the CSV files from the previous section (paths can also be provided as command line arguments) and save the resulting figures at the provided `--save_path` directory.
-
-#### Fig. 9(a)
-
-```python ./scripts/generate_ghz_graph.py```
-
-#### Fig. 9(b)
-
-```python ./scripts/generate_cswap_graph.py```
-
-#### Fig. 9(c)
-
-```python ./scripts/generate_overall_error_graphs.py```
-
-#### Fig. 10
-
-``````python ./scripts/asymptotics_graphs.py``````
