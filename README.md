@@ -47,14 +47,13 @@ add these two commands at the top cell of your notebook:
 
 This will autoreload your modification.
 
-6. Run tests
+### Run tests
 
 To run all tests (this may take a while), run
 
 ```bash
 pytest tests
 ```
-which might take a while.
 
 For a single test function in a specific test file:
 ```bash
