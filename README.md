@@ -131,19 +131,27 @@ Figs. 9 and 10 used in the paper were generated using the following commands, wh
 
 ### Fig. 9(a)
 
-```python ./scripts/generate_ghz_graph.py```
+```bash
+python ./scripts/generate_ghz_graph.py --max_parties 12
+```
 
 ### Fig. 9(b)
 
-```python ./scripts/generate_cswap_graph.py```
+```bash
+python ./scripts/generate_cswap_graph.py
+```
 
 ### Fig. 9(c)
 
-```python ./scripts/generate_overall_error_graphs.py```
+```bash
+python ./scripts/generate_overall_error_graphs.py
+```
 
 ### Fig. 10
 
-```python ./scripts/asymptotics_graphs.py```
+```bash
+python ./scripts/asymptotics_graphs.py
+```
 
 ## Running Simulations via SLURM (optional)
 
