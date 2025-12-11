@@ -52,12 +52,12 @@ This will autoreload your modification.
 To run all tests (this may take a while), run
 
 ```bash
-pytest tests
+python -m pytest tests
 ```
 
 For a single test function in a specific test file:
 ```bash
-pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
+python -m pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ```
 
 `-s` is to display `print` message in the test.
