@@ -182,7 +182,7 @@ Next, find the line that runs the python script (likely line 23)
 
 and modify the arguments as desired.
 
-3. Submit the job
+4. Submit the job
 
 Run the following line from the root directory of the respository:
 
@@ -190,7 +190,7 @@ Run the following line from the root directory of the respository:
 
 This will create 150 jobs, each sampling a single random input bitstring. Each job will create an output file in the specified output directory. On occasion, some jobs may fail due to memory constraints. In that case, you can run more jobs (be sure that the filenames don't overlap) until there are at least 150.
 
-4. Compiling and plotting the data
+5. Compiling and plotting the data
 
 We also provide a script which compiles the results and replaces it with a csv file:
 
