@@ -6,10 +6,6 @@ import pandas as pd
 
 from dqalgo.data_mgr import NISQCswapDataMgr
 from dqalgo.nisq.eval import eval_CSWAP_teledata, eval_CSWAP_telegate
-from dqalgo.nisq.eval_cswap import (
-    eval_CSWAP_teledata_parallel,
-    eval_CSWAP_telegate_parallel
-)
 
 
 def main():
@@ -19,27 +15,20 @@ def main():
     parser.add_argument("--n_shots", type=int, default=1024)
     parser.add_argument("--iters_per_input", type=int, default=1)
     parser.add_argument("--n_samples", type=int, default=300)
-    parser.add_argument("--parallel", default=False, action="store_true")
     parser.add_argument("--method", type=str, default="telegate", choices=["teledata", "telegate"])
 
     args = parser.parse_args()
     if args.method == "teledata":
         print("Using teledata method")
-        if args.parallel:
-            eval_func = eval_CSWAP_teledata_parallel
-        else:
-            eval_func = eval_CSWAP_teledata
+        eval_func = eval_CSWAP_teledata
     else:
         print("Using telegate method")
-        if args.parallel:
-            eval_func = eval_CSWAP_telegate_parallel
-        else:
-            eval_func = eval_CSWAP_telegate
+        eval_func = eval_CSWAP_telegate
 
     dmgr = NISQCswapDataMgr()
     fid_data = []
+    time_start = time.time()
     for n_trgts, p2 in itertools.product(args.n_trgts, args.p2):
-        time_start = time.time()
         p1 = p2 / 10
         pm = p2
         print(f"n_trgts: {n_trgts}, p1: {p1}, p2: {p2}, pm: {pm}")
