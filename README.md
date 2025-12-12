@@ -73,6 +73,16 @@ python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata --p
 
 You can change the number of targets via the `--n_trgts` (`-t`) argument and set the method to either `teledata` or `telegate`.
 
+For the data used in this paper, run the following commands:
+```bash
+python ./scripts/eval_nisq_cswap.py --n_trgts 1 2 3 4 5 --p2 0.001 0.003 0.005 --method teledata
+python ./scripts/eval_nisq_cswap.py --n_trgts 1 2 3 4 5 --p2 0.001 0.003 0.005 --method telegate
+```
+Among all the tasks, the most costly one is n_trgts = 5 for telegate method, taking about 4 hours on MBP with M1 Pro chip. We suggest running this task separately or on a cluster.
+```bash
+python ./scripts/eval_nisq_cswap.py --n_trgts 5 --p2 0.001 0.003 0.005 --method telegate
+```
+
 Its components are simulated below.
 
 ### Generate the error distribution of a Fanout circuit
