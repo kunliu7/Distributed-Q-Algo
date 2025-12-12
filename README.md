@@ -52,12 +52,12 @@ This will autoreload your modification.
 To run all tests (this may take a while), run
 
 ```bash
-pytest tests
+python -m pytest tests
 ```
 
 For a single test function in a specific test file:
 ```bash
-pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
+python -m pytest tests/test_nisq/test_fanout_by_ghz.py::test_truth_table_tomography -s
 ```
 
 `-s` is to display `print` message in the test.
@@ -68,7 +68,7 @@ This is the top-level script to simulate the CSWAP circuits.
 
 To run the teledata scheme of the CSWAP operation, run:
 ```
-python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata
+python ./scripts/eval_nisq_cswap.py --n_trgts 3 --p2 0.001 --method teledata --parallel
 ```
 
 You can change the number of targets via the `--n_trgts` (`-t`) argument and set the method to either `teledata` or `telegate`.
