@@ -1,6 +1,6 @@
 # COMPAS: A Distributed Multi-Party SWAP Test for Parallel Quantum Algorithms (ASPLOS 2026)
 
-### [Brayden Goldstein-Gelb](http://brayden-gg.github.io), [Kun Liu](https://www.linkedin.com/in/kun-liu-0276141a4), [John M. Martyn](https://jmmartyn.github.io), [Hengyun Zhou](https://scholar.google.com/citations?user=XLHpQy8AAAAJ&hl=en), [Yongshan Ding](https://www.yongshanding.com), [Yuan Liu](https://ece.ncsu.edu/people/yliu335/)
+### [Brayden Goldstein-Gelb](http://brayden-gg.github.io)\*, [Kun Liu](https://www.linkedin.com/in/kun-liu-0276141a4)\*, [John M. Martyn](https://jmmartyn.github.io), [Hengyun Zhou](https://scholar.google.com/citations?user=XLHpQy8AAAAJ&hl=en), [Yongshan Ding](https://www.yongshanding.com), [Yuan Liu](https://ece.ncsu.edu/people/yliu335/)
 
 We provide code to simulate the circuit constructions developed in the paper.
 All the code, data and visualizations are in this repository.
@@ -83,7 +83,7 @@ Among all the tasks, the most costly one is n_trgts = 5 for telegate method, tak
 python ./scripts/eval_nisq_cswap.py --n_trgts 5 --p2 0.001 0.003 0.005 --method telegate
 ```
 
-Its components are simulated below.
+To a cSWAP circuit, its components are simulated below.
 
 ### Generate the error distribution of a Fanout circuit
 
