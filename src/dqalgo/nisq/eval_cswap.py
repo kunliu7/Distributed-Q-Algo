@@ -1,29 +1,21 @@
-from multiprocessing import Pool, cpu_count
+raise DeprecationWarning("This module is deprecated. Please use the eval module instead.")
 import random
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
 from qiskit_aer import AerSimulator
 from tqdm import tqdm
 
-from dqalgo.nisq.circuits import (
-    get_CSWAP_teledata_fewer_ancillas_circ,
-    get_CSWAP_telegate_fewer_ancillas_circ
-)
-
-from dqalgo.nisq.experimental_noise import (
-    get_fanout_error_probs,
-    get_teledata_error_probs,
-    get_telecnot_error_probs,
-    get_pre_teletoffoli_error_probs
-)
-
-from dqalgo.nisq.utils import (
-    classically_compute_CSWAP,
-    get_counts_of_first_n_regs,
-    get_depolarizing_noise_model,
-    sample_bitstrings,
-    update_total_counts
-)
+from dqalgo.nisq.circuits import (get_CSWAP_teledata_fewer_ancillas_circ,
+                                  get_CSWAP_telegate_fewer_ancillas_circ)
+from dqalgo.nisq.experimental_noise import (get_fanout_error_probs,
+                                            get_pre_teletoffoli_error_probs,
+                                            get_telecnot_error_probs,
+                                            get_teledata_error_probs)
+from dqalgo.nisq.utils import (classically_compute_CSWAP,
+                               get_counts_of_first_n_regs,
+                               get_depolarizing_noise_model, sample_bitstrings,
+                               update_total_counts)
 
 from .eval import compute_classical_fidelity, normalize_counts
 
@@ -111,7 +103,15 @@ def eval_CSWAP_telegate_single_thread(
 
 
 def evaluate_single_input_teledata(args):
-    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors = args
+    (
+        input_bitstr,
+        n_trgts,
+        p_err,
+        shots_per_circ,
+        circs_per_input,
+        n_fanout_errors,
+        teledata_errors,
+    ) = args
     n_data_qubits = 2*n_trgts + 1
 
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
@@ -126,6 +126,7 @@ def evaluate_single_input_teledata(args):
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
+            teledata_errors=teledata_errors,
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()
@@ -155,12 +156,21 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=1024
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    teledata_errors = get_teledata_error_probs(n_trgts=1, p2=10*p_err)
 
     print('Constructing circuits')
 
     # Prepare arguments for parallel processing
     eval_args = [
-        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors)
+        (
+            input_bitstr,
+            n_trgts,
+            p_err,
+            shots_per_circ,
+            circs_per_input,
+            n_fanout_errors,
+            teledata_errors,
+        )
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
 
@@ -181,7 +191,16 @@ def eval_CSWAP_teledata_parallel(n_trgts: int, p_err: float, shots_per_circ=1024
 
 
 def evaluate_single_input_telegate(args):
-    input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors = args
+    (
+        input_bitstr,
+        n_trgts,
+        p_err,
+        shots_per_circ,
+        circs_per_input,
+        n_fanout_errors,
+        telecnot_errors,
+        pre_teletoffoli_errors,
+    ) = args
     n_data_qubits = 2*n_trgts + 1
 
     expected_output_bitstr = classically_compute_CSWAP(input_bitstr)
@@ -192,10 +211,12 @@ def evaluate_single_input_telegate(args):
 
     total_counts = {}
     for _ in range(circs_per_input):
-        qc = get_CSWAP_teledata_fewer_ancillas_circ(
+        qc = get_CSWAP_telegate_fewer_ancillas_circ(
             input_bitstr=input_bitstr,
             meas_all=True,
             n_fanout_errors=n_fanout_errors,
+            telecnot_errors=telecnot_errors,
+            pre_teletoffoli_errors=pre_teletoffoli_errors,
         )
 
         results = sim.run(qc, shots=shots_per_circ).result()
@@ -225,12 +246,23 @@ def eval_CSWAP_telegate_parallel(n_trgts: int, p_err: float, shots_per_circ=128,
     n_samples = min(n_samples, 2**n_data_qubits)
 
     n_fanout_errors = get_fanout_error_probs(n_trgts=n_trgts, p2=10*p_err)
+    telecnot_errors = get_telecnot_error_probs(n_trgts=1, p2=10*p_err)
+    pre_teletoffoli_errors = get_pre_teletoffoli_error_probs(n_trgts=1, p2=10*p_err)
 
     print('Constructing circuits')
 
     # Prepare arguments for parallel processing
     eval_args = [
-        (input_bitstr, n_trgts, p_err, shots_per_circ, circs_per_input, n_fanout_errors)
+        (
+            input_bitstr,
+            n_trgts,
+            p_err,
+            shots_per_circ,
+            circs_per_input,
+            n_fanout_errors,
+            telecnot_errors,
+            pre_teletoffoli_errors,
+        )
         for input_bitstr in sample_bitstrings(n_data_qubits, n_samples)
     ]
 
