@@ -4,7 +4,6 @@ import numpy as np
 from qiskit.quantum_info import process_fidelity
 from qiskit.visualization import plot_state_city
 from qiskit_aer import AerSimulator
-from qiskit_experiments.library import ProcessTomography
 
 from dqalgo.nisq.circuits import get_Fanout_circ_by_GHZ_w_reset
 from dqalgo.nisq.eval import compute_classical_fidelity, normalize_counts
