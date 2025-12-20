@@ -1,7 +1,8 @@
 import argparse
-from matplotlib import pyplot as plt
+
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 k_vals = [8,12]
@@ -15,9 +16,9 @@ def fidelity_model(n, a, b):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--teledata_path", type=str, default='./data/nisq/cswap/teledata/collected.csv')
-    parser.add_argument("--telegate_path", type=str, default='./data/nisq/cswap/telegate/collected.csv')
-    parser.add_argument("--ghz_path", type=str, default='./data/nisq/ghz/collected.csv')
+    parser.add_argument("--teledata_path", type=str, default='./data/nisq/cswap/n_trgts=1,2,3,4,5-p2=0.001,0.003,0.005-method=teledata.csv')
+    parser.add_argument("--telegate_path", type=str, default='./data/nisq/cswap/n_trgts=1,2,3,4,5-p2=0.001,0.003,0.005-method=telegate.csv')
+    parser.add_argument("--ghz_path", type=str, default='./data/nisq/ghz/n_parties=4,6,8,10,12-p2=0.001,0.003,0.005.csv')
     parser.add_argument("--save_path", type=str, default='./data/nisq/overall_error_graphs/overall_simulations.pdf')
     args = parser.parse_args()
 
