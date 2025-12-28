@@ -3,7 +3,7 @@
 ### [Brayden Goldstein-Gelb](http://brayden-gg.github.io)\*, [Kun Liu](https://www.linkedin.com/in/kun-liu-0276141a4)\*, [John M. Martyn](https://jmmartyn.github.io), [Hengyun Zhou](https://scholar.google.com/citations?user=XLHpQy8AAAAJ&hl=en), [Yongshan Ding](https://www.yongshanding.com), [Yuan Liu](https://ece.ncsu.edu/people/yliu335/)
 
 We provide code to simulate the circuit constructions developed in the paper.
-All the code, data and visualizations are in this repository.
+All the code, data and visualizations are in this repository. Additionally, we provide the Mathematica code to verify the analytical fidelity bounds discussed in the paper at `mathematica/noisy_state_fidelity.nb`
 
 **High-level overview:**
 As mentioned in the paper, to simulate the circuit efficiently, we separate the overall circuit into multiple sub-circuits, and simulate each sub-circuit independently and derive their error distributions.
