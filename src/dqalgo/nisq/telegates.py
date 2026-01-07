@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 class TelegateCircBuilder:
-    """Mid-circuit measurement before the Toffoli gate in Fig. 4d of COMPAS"""
+    """Mid-circuit measurement before the Toffoli gate in Fig. 6(d) of COMPAS"""
     def __init__(self, n: int, p1: float = 0.0, p2: float = 0.0, pm: float = 0.0):
         self.n = n
         self.ctrl_bell = list(range(n))
