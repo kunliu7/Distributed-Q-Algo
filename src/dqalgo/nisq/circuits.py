@@ -158,7 +158,7 @@ def apply_parallel_toffoli_via_fanout(
         n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
     """
-    Red circuit from Fig. 5(e) of QRACD
+    Red circuit from Fig. 6(e) of COMPAS
     """
     n_trgts = len(targ_regs)
 
@@ -264,7 +264,7 @@ def apply_teleported_toffoli(
         n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
-        Orange circuit from Fig. 5(d) of QRACD.
+        Orange circuit from Fig. 6(d) of COMPAS.
         Control 1 and target are shared by part A, Control 2 is located on party B.
 
         ctrl1_reg: |phi> in the diagram (located in QPU controlled by party A)
@@ -361,7 +361,7 @@ def apply_teleported_cnot(
         party_B_bell_cregs: list[ClassicalRegister]
     ) -> None:
     """
-    Teleported CNOT circuit from Fig. 1(b) of QRACD. Applies
+    Teleported CNOT circuit from Fig. 1(b) of COMPAS. Applies
     a CNOT gate from ctrl_regs to targ_regs, measuring party_A_bell_regs and party_B_bell_regs.
 
     ctrl_regs: |phi> in the diagram (located in QPU controlled by party A)
@@ -388,15 +388,14 @@ def apply_teleported_cnot(
 def apply_state_teleportation(
         qc: QuantumCircuit,
         state_to_teleport: list[QuantumRegister],
-        target_ancillas: list[QuantumRegister],
         party_A_bell_regs: list[QuantumRegister],
         party_B_bell_regs: list[QuantumRegister],
         state_to_teleport_cregs: list[ClassicalRegister],
-        party_A_bell_cregs: list[ClassicalRegister]
+        bell_cregs: list[ClassicalRegister]
     ) -> None:
     """
-    State teleportation circuit from Fig. 1(b) of QRACD. Teleport
-    state_to_teleport to target_ancillas, measuring state_to_teleport and party_A_bell_regs.
+    State teleportation circuit from Fig. 1(a) of COMPAS. Teleports state_to_teleport
+    on part A to party_B_bell_regs on party B, measuring state_to_teleport and party_A_bell_regs.
 
     state_to_teleport: |psi> in the diagram (located in QPU controlled by party A)
     target_ancillas: |0> in the diagram (located in QPU controlled by party B)
@@ -412,14 +411,13 @@ def apply_state_teleportation(
     for i in range(len(state_to_teleport)):
         qc.measure(state_to_teleport[i], state_to_teleport_cregs[i])
 
-        qc.measure(party_A_bell_regs[i], party_A_bell_cregs[i])
-        with qc.if_test((party_A_bell_cregs[i], 1)):
+        qc.measure(party_A_bell_regs[i], bell_cregs[i])
+        with qc.if_test((bell_cregs[i], 1)):
             qc.x(party_B_bell_regs[i])
 
         with qc.if_test((state_to_teleport_cregs[i], 1)):
             qc.z(party_B_bell_regs[i])
 
-    qc.cx(party_B_bell_regs, target_ancillas)
 
 # CSWAP circuits
 def apply_CSWAP_teledata(
@@ -427,16 +425,14 @@ def apply_CSWAP_teledata(
         ctrl_reg: QuantumRegister,
         state_A: list[QuantumRegister],
         state_B: list[QuantumRegister],
-        party_A_ancilla_regs: list[QuantumRegister],
         party_A_bell_regs: list[QuantumRegister],
         party_B_bell_regs: list[QuantumRegister],
-        party_A_bell_cregs: list[ClassicalRegister],
-        party_A_ancilla_cregs: list[ClassicalRegister],
-        party_B_bell_cregs: list[ClassicalRegister],
+        state_to_teleport_cregs: list[ClassicalRegister],
+        bell_cregs: list[ClassicalRegister],
         n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(c) of QRACD. Applies
+        CSWAP circuit from Fig. 6(c) of COMPAS. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 
@@ -454,41 +450,42 @@ def apply_CSWAP_teledata(
         apply_state_teleportation(
             qc=qc,
             state_to_teleport=state_B,
-            target_ancillas=party_A_ancilla_regs,
             party_A_bell_regs=party_B_bell_regs,
             party_B_bell_regs=party_A_bell_regs,
-            state_to_teleport_cregs=party_A_ancilla_cregs,
-            party_A_bell_cregs=party_B_bell_cregs
+            state_to_teleport_cregs=state_to_teleport_cregs,
+            bell_cregs=bell_cregs
         )
 
         # apply an local controlled swap of ctrl_reg on state_A and party_A_ancilla_regs
-        qc.cx(party_A_ancilla_regs, state_A)
+        qc.cx(party_A_bell_regs, state_A)
         apply_parallel_toffoli_via_fanout(
             qc=qc,
             ctrl1_reg=ctrl_reg,
             ctrl2_regs=state_A,
-            targ_regs=party_A_ancilla_regs,
+            targ_regs=party_A_bell_regs,
             n_fanout_errors=n_fanout_errors,
         )
-        qc.cx(party_A_ancilla_regs, state_A)
+        qc.cx(party_A_bell_regs, state_A)
+
+
+        # for the purposes of simulation we reuse the old register
+        party_A_new_bell_regs = party_B_bell_regs
+        party_B_new_bell_regs = state_B
 
         # reset and reshare bell pairs
-        qc.reset(party_A_bell_regs + party_B_bell_regs)
-        qc.h(party_A_bell_regs)
-        qc.cx(party_A_bell_regs, party_B_bell_regs)
+        qc.reset(party_A_new_bell_regs + party_B_new_bell_regs)
+        qc.h(party_A_new_bell_regs)
+        qc.cx(party_A_new_bell_regs, party_B_new_bell_regs)
 
-        # reset party_B state
-        qc.reset(state_B)
 
         # teleport the swapped state still in party_A_ancilla_regs back to state_B
         apply_state_teleportation(
             qc=qc,
-            state_to_teleport=party_A_ancilla_regs,
-            target_ancillas=state_B,
-            party_A_bell_regs=party_A_bell_regs,
-            party_B_bell_regs=party_B_bell_regs,
-            state_to_teleport_cregs=party_A_ancilla_cregs,
-            party_A_bell_cregs=party_A_bell_cregs
+            state_to_teleport=party_A_bell_regs,
+            party_A_bell_regs=party_A_new_bell_regs,
+            party_B_bell_regs=party_B_new_bell_regs,
+            state_to_teleport_cregs=state_to_teleport_cregs,
+            bell_cregs=bell_cregs
         )
 
 def get_CSWAP_teledata_circ(
@@ -501,9 +498,9 @@ def get_CSWAP_teledata_circ(
     state_size = (n_qubits - 1)//2
 
     qubits = [QuantumRegister(1, f't{i}') for i in range(n_qubits)]
-    bell_pair_ancilla_regs = [QuantumRegister(1, f'a{i}') for i in range(3*state_size)]
+    bell_pair_ancilla_regs = [QuantumRegister(1, f'a{i}') for i in range(2*state_size)]
     qubit_cregs = ClassicalRegister(n_qubits, f'data_cregs')
-    anc_cregs = [ClassicalRegister(1, f'anc_cregs{i}') for i in range(3*state_size)]
+    anc_cregs = [ClassicalRegister(1, f'anc_cregs{i}') for i in range(2*state_size)]
 
     all_regs = qubits + bell_pair_ancilla_regs
     qc = QuantumCircuit(*all_regs, *anc_cregs, qubit_cregs)
@@ -511,13 +508,11 @@ def get_CSWAP_teledata_circ(
     ctrl_reg = qc.qubits[0]
     state_A_regs = qc.qubits[1:state_size+1]
     state_B_regs = qc.qubits[state_size+1:n_qubits]
-    party_A_ancilla_regs = qc.qubits[n_qubits:n_qubits+state_size]
-    party_A_bell_regs = qc.qubits[n_qubits+state_size:n_qubits+2*state_size]
-    party_B_bell_regs = qc.qubits[n_qubits+2*state_size:n_qubits+3*state_size]
+    party_A_bell_regs = qc.qubits[n_qubits:n_qubits+state_size]
+    party_B_bell_regs = qc.qubits[n_qubits+state_size:n_qubits+2*state_size]
 
-    party_A_ancilla_cregs = qc.clbits[:state_size]
-    party_A_bell_cregs = qc.clbits[state_size:2*state_size]
-    party_B_bell_cregs = qc.clbits[2*state_size:3*state_size]
+    state_to_teleport_cregs = qc.clbits[:state_size]
+    bell_cregs = qc.clbits[state_size:2*state_size]
 
     # prepare initial state for data qubits
     for i, val in enumerate(input_bitstr[::-1]):
@@ -533,12 +528,10 @@ def get_CSWAP_teledata_circ(
         ctrl_reg=ctrl_reg,
         state_A=state_A_regs,
         state_B=state_B_regs,
-        party_A_ancilla_regs=party_A_ancilla_regs,
         party_A_bell_regs=party_A_bell_regs,
         party_B_bell_regs=party_B_bell_regs,
-        party_A_bell_cregs=party_A_bell_cregs,
-        party_A_ancilla_cregs=party_A_ancilla_cregs,
-        party_B_bell_cregs=party_B_bell_cregs,
+        state_to_teleport_cregs=state_to_teleport_cregs,
+        bell_cregs=bell_cregs,
         n_fanout_errors=n_fanout_errors,
     )
 
@@ -560,7 +553,7 @@ def apply_CSWAP_telegate(
         n_fanout_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(b) of QRACD. Applies
+        CSWAP circuit from Fig. 6(b) of COMPAS. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 
@@ -681,7 +674,7 @@ def apply_teleported_toffoli_fewer_ancillas(
         **kwargs
     ) -> None:
         """
-        Orange circuit from Fig. 5(d) of QRACD
+        Teleported toffoli cirtcuit  from Fig. 6(d) of COMPAS (in orange)
 
         ctrl1_reg: |phi> in the diagram (located in QPU controlled by party A)
         ctrl2_regs: rho_j in the diagram (located in QPU controlled by party A)
@@ -719,7 +712,7 @@ def apply_CSWAP_teledata_fewer_ancillas(
         **kwargs
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(c) of QRACD. Applies
+        CSWAP circuit from Fig. 6(c) of COMPAS (purple). Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs. In this implementation, we skip the teleportations
         and inject noise into the circuit based on other experiments
@@ -799,7 +792,7 @@ def apply_CSWAP_telegate_fewer_ancillas(
         pre_teletoffoli_errors: list[tuple[str, float]] | None = None,
     ) -> None:
         """
-        CSWAP circuit from Fig. 5(b) of QRACD. Applies
+        CSWAP circuit from Fig. 6(b) of COMPAS. Applies
         a CSWAP gate from ctrl_regs to state_A and state_B, measuring party_A_ancilla_regs,
         party_A_bell_regs and party_B_bell_regs.
 

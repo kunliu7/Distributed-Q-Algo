@@ -58,7 +58,7 @@ def main():
             ax.set_ylabel('Fidelity (Estimate)', fontsize=18)
         else:
             ax.tick_params(labelleft=False)
-        # ax.set_title(f'Overall QRACD Fidelity ({scheme})', fontsize=18)
+        # ax.set_title(f'Overall COMPAS Fidelity ({scheme})', fontsize=18)
         ax.tick_params(axis='both', which='major', labelsize=15)
         ax.set_ylim(0, 1)
         ax.legend(fontsize=15)
